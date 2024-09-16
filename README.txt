@@ -107,4 +107,4 @@ Vem gör vad
 Github
 		 X vem skapar repo
 		 - main - dev - ticket  struktur på branches
-		 - 
+		 - x
