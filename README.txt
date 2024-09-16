@@ -1,4 +1,4 @@
-
+Prulo, Egil, Anders ---> dreamteam!
 
 	20 rum
 		10 enkelrum
@@ -107,4 +107,4 @@ Vem gör vad
 Github
 		 X vem skapar repo
 		 - main - dev - ticket  struktur på branches
-		 - 
+		 - x
