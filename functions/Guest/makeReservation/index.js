@@ -1,6 +1,7 @@
 import { responseMaker } from "../../services/responseMaker"
 import { db } from "../../../data"
 const { v4: uuidv4 } = require('uuid')
+import { priceCalc } from "../../services/priceCalc";
 
 exports.handler = async (event) => {
 
@@ -9,14 +10,14 @@ exports.handler = async (event) => {
 
     try {
         const bookedRooms = avalibleRooms( rooms, checkIn, checkOut, bookingID )
-        const totalprice = priceCalc( 0, 2, 3 )
+        const totalprice = priceCalc( bookedRooms )
         await db.put({
             TableName: "Bookings",
             Item: {
                 BookingId: bookingID,
                 rooms: bookedRooms,
                 guests: guests,
-                totalprice:totalprice,
+                totalprice: totalprice,
                 startDate: checkIn,
                 endDate: checkOut,
                 customer: name,
