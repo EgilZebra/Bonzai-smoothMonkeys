@@ -1,4 +1,4 @@
-Prulo, Egil, Anders ---> dreamteam!
+
 
 	20 rum
 		10 enkelrum
@@ -19,10 +19,9 @@ Prulo, Egil, Anders ---> dreamteam!
 
 			- Rum
 				rumsnummer:
-				datum: {
-						{ date: 1/1/25, avalible: number},
-						2/1/25: Number,
-				antal gäster:
+				datum: [
+					{ date: 1/1/25, avalible: number},
+					]
 				
 				
 
@@ -106,5 +105,5 @@ Vem gör vad
 
 Github
 		 X vem skapar repo
-		 - main - dev - ticket  struktur på branches
-		 - x
+		 X main - dev - ticket  struktur på branches
+		 - 

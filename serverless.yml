@@ -8,7 +8,6 @@ provider:
   runtime: nodejs20.x
   region: eu-north-1
 
-
 build:
   esbuild:
     minify: true
@@ -55,7 +54,9 @@ resourses:
           - AttributeName: roomId
             AttributeType: "S"
           - AttributeName: dates
-            AttributeType: "A"          
+            AttributeType: "S"   
+          - AttributeName: bookingId
+            AttributeType: "S"       
         KeySchema:
           - AttributeName: roomId
           KeyType: HASH
