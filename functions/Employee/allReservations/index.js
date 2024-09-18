@@ -1,6 +1,6 @@
 import { responseMaker } from "../../services/responseMaker";
 import { db } from "../../../data";
-
+require("dotenv").config();
 
 exports.handler = async (event) => {
   return {
@@ -10,7 +10,6 @@ exports.handler = async (event) => {
     }),
   };
 };
-
 
 // exports.handler = async (event) => {
 //   // const bookings = {
