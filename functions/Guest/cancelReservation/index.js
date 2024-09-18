@@ -5,8 +5,7 @@ import {
   GetCommand,
   DeleteCommand,
 } from "@aws-sdk/lib-dynamodb";
-import dotenv from "dotenv";
-dotenv.config();
+require("dotenv").config();
 
 const client = new DynamoDBClient({});
 const dynamoDb = DynamoDBDocumentClient.from(client);
