@@ -1,14 +1,13 @@
+org: ${env:SERVERLESS_ORG}
 
-org: egilramsten
+service: ${env:SERVERLESS_SERVICE}
 
-service: Bonzai
-    
 provider:
   name: aws
   runtime: nodejs20.x
-  region: eu-north-1
-  iam: 
-    role: arn:aws:iam::390403901188:role/lambda-tester
+  region: ${env:AWS_REGION}
+  iam:
+    role: ${env:AWS_ROLE}
 
 build:
   esbuild:
@@ -19,11 +18,12 @@ package:
 
 functions:
   allReservations:
-    handler: /functions/Employee/allReservations/index.handler
+    handler: functions/Employee/allReservations/index.handler
     events:
       - httpApi:
-          path: "/bonzai/emp/reservation"
+          path: /bonzai/emp/reservation
           method: GET
+
   # dateReservations:
   #   handler: functions/Employee/dateReservations/index.handler
   #   events:
@@ -42,26 +42,25 @@ functions:
   #     - httpApi:
   #         path: "/bonzai/guest/avboka"
   #         method: DELETE
-  makeReservation:
-    handler: /functions/Guest/makeReservation/index.handler
-    events:
-      - httpApi:
-          path: "/bonazi/guest/boka"
-          method: POST
+  #makeReservation:
+  #  handler: /functions/Guest/makeReservation/index.handler
+  #  events:
+  #    - httpApi:
+  #        path: "/bonazi/guest/boka"
+  #        method: POST
   # remakeReservation:
   #   handler: functions/Guest/remakeReservation/index.handler
   #   events:
   #     - httpApi:
   #         path: "/bonzai/guest/omboka"
   #         method: PUT
-          
 
 resources:
   Resources:
     BonzaiBooking:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: Bookings
+        TableName: ${env:TABLE_NAME_BOOKINGS}
         AttributeDefinitions:
           - AttributeName: BookingId
             AttributeType: "S"
@@ -72,12 +71,12 @@ resources:
     BonzaiRooms:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: Rooms
+        TableName: ${env:TABLE_NAME_ROOMS}
         AttributeDefinitions:
           - AttributeName: roomId
             AttributeType: "S"
           - AttributeName: date
-            AttributeType: "S"         
+            AttributeType: "S"
         KeySchema:
           - AttributeName: roomId
             KeyType: HASH
