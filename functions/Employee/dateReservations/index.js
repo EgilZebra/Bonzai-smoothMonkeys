@@ -10,6 +10,19 @@ const ddbDocClient = DynamoDBDocumentClient.from(client);
 const TABLE_NAME = process.env.TABLE_NAME_ROOMS;
 
 exports.handler = async (event) => {
+  const date = 240101;
+
+  // Validate date format (6 digits, numeric)
+  if (!date || !/^\d{6}$/.test(date)) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        message:
+          "Invalid or missing date. Please provide a valid date in YYMMDD format.",
+      }),
+    };
+  }
+
   try {
     const params = {
       TableName: "Rooms",
@@ -26,17 +39,79 @@ exports.handler = async (event) => {
       };
     }
 
-    const roomStatuses = data.Items.map((item) => ({
-      roomId: item.roomId,
-      date: item.date,
-      bookingId: item.bookingId || "Unknown",
-    }));
+    const roomStatuses = data.Items.filter((item) => item.date === date).map(
+      (item) => ({
+        roomId: item.roomId,
+        date: item.date,
+        bookingId: item.bookingId || "Unknown",
+      })
+    );
+
+    // Define total available rooms by type
+    const totalAvailableRooms = {
+      single: 10, // Room IDs 1-10
+      double: 5, // Room IDs 11-15
+      suite: 5, // Room IDs 16-20
+    };
+
+    // Summarize room types
+    const summary = {
+      singleRoomsBooked: 0,
+      doubleRoomsBooked: 0,
+      suitesBooked: 0,
+      totalBooked: 0,
+    };
+
+    roomStatuses.forEach((status) => {
+      const roomId = parseInt(status.roomId);
+      if (roomId >= 1 && roomId <= 10) {
+        summary.singleRoomsBooked++;
+      } else if (roomId >= 11 && roomId <= 15) {
+        summary.doubleRoomsBooked++;
+      } else if (roomId >= 16 && roomId <= 20) {
+        summary.suitesBooked++;
+      }
+    });
+
+    summary.totalBooked =
+      summary.singleRoomsBooked +
+      summary.doubleRoomsBooked +
+      summary.suitesBooked;
+
+    // Calculate percentage of rooms booked
+    const calculatePercentage = (booked, total) =>
+      total > 0 ? ((booked / total) * 100).toFixed(2) : 0;
+
+    const percentageSummary = {
+      singleRoomBookingPercentage: calculatePercentage(
+        summary.singleRoomsBooked,
+        totalAvailableRooms.single
+      ),
+      doubleRoomBookingPercentage: calculatePercentage(
+        summary.doubleRoomsBooked,
+        totalAvailableRooms.double
+      ),
+      suiteBookingPercentage: calculatePercentage(
+        summary.suitesBooked,
+        totalAvailableRooms.suite
+      ),
+      totalBookingPercentage: calculatePercentage(
+        summary.totalBooked,
+        totalAvailableRooms.single +
+          totalAvailableRooms.double +
+          totalAvailableRooms.suite
+      ),
+    };
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         message: "Success",
-        roomStatuses: roomStatuses, // Return as an array of objects
+        roomStatuses: roomStatuses,
+        summary: {
+          ...summary,
+          ...percentageSummary,
+        },
       }),
     };
   } catch (error) {
