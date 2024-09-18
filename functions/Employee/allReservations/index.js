@@ -1,10 +1,15 @@
-import { responseMaker } from "../../services/responseMaker"
-import { db } from "../../../data"
+import { responseMaker } from "../../services/responseMaker";
+import { db } from "../../../data";
 
 exports.handler = async (event) => {
-    try {
-        return responseMaker(200, )
-    } catch (error) {
-        return responseMaker( 500, )
-    } 
-}
+  const bookings = {
+    TableName: "Bookings",
+  };
+
+  try {
+    const books = await db.scan(bookings).promise();
+    return responseMaker(200, books.Items);
+  } catch (error) {
+    return responseMaker(500, { message: "Error finding bookings" });
+  }
+};
