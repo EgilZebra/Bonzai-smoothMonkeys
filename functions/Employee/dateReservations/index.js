@@ -7,14 +7,11 @@ require("dotenv").config();
 
 const client = new DynamoDBClient();
 const ddbDocClient = DynamoDBDocumentClient.from(client);
-const TABLE_NAME = process.env.TABLE_NAME_ROOMS;
 
 exports.handler = async (event) => {
-  // Parse the body to extract the date
   const requestBody = JSON.parse(event.body);
-  const date = requestBody.date; // Assuming the date is passed as a property in the body
+  const date = requestBody.date;
 
-  // Validate date format (6 digits, numeric)
   if (!date || !/^\d{6}$/.test(date)) {
     return {
       statusCode: 400,
@@ -27,7 +24,7 @@ exports.handler = async (event) => {
 
   try {
     const params = {
-      TableName: "Rooms", // Use the table name from the environment variable
+      TableName: "Rooms",
     };
 
     const data = await ddbDocClient.send(new ScanCommand(params));
@@ -49,14 +46,12 @@ exports.handler = async (event) => {
       })
     );
 
-    // Define total available rooms by type
     const totalAvailableRooms = {
       single: 10, // Room IDs 1-10
       double: 5, // Room IDs 11-15
       suite: 5, // Room IDs 16-20
     };
 
-    // Summarize room types
     const summary = {
       singleRoomsBooked: 0,
       doubleRoomsBooked: 0,
@@ -80,7 +75,6 @@ exports.handler = async (event) => {
       summary.doubleRoomsBooked +
       summary.suitesBooked;
 
-    // Calculate percentage of rooms booked
     const calculatePercentage = (booked, total) =>
       total > 0 ? ((booked / total) * 100).toFixed(2) : 0;
 
