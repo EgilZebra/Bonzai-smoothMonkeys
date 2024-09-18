@@ -1,0 +1,164 @@
+{
+  "service": {
+    "service": "Bonzai",
+    "serviceObject": {
+      "name": "Bonzai"
+    },
+    "provider": {
+      "name": "aws",
+      "runtime": "nodejs20.x",
+      "region": "eu-north-1",
+      "stage": "dev",
+      "versionFunctions": true,
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "BonzaiBooking": {
+            "Type": "AWS::DynamoDB::Table",
+            "Properties": {
+              "TableName": "Bookings",
+              "AttributeDefinitions": [
+                {
+                  "AttributeName": "BookingId",
+                  "AttributeType": "S"
+                }
+              ],
+              "KeySchema": [
+                {
+                  "AttributeName": "BookingId",
+                  "KeyType": "HASH"
+                }
+              ],
+              "BillingMode": "PAY_PER_REQUEST"
+            }
+          },
+          "BonzaiRooms": {
+            "Type": "AWS::DynamoDB::Table",
+            "Properties": {
+              "TableName": "Rooms",
+              "AttributeDefinitions": [
+                {
+                  "AttributeName": "roomId",
+                  "AttributeType": "S"
+                },
+                {
+                  "AttributeName": "date",
+                  "AttributeType": "S"
+                }
+              ],
+              "KeySchema": [
+                {
+                  "AttributeName": "roomId",
+                  "KeyType": "HASH"
+                },
+                {
+                  "AttributeName": "date",
+                  "KeyType": "RANGE"
+                }
+              ],
+              "BillingMode": "PAY_PER_REQUEST"
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": "serverless-framework-deployments-eu-north-1-9c7e3e1b-48dd",
+            "Export": {
+              "Name": "sls-Bonzai-dev-ServerlessDeploymentBucketName"
+            }
+          }
+        }
+      }
+    },
+    "pluginsData": {},
+    "functions": {},
+    "resources": {
+      "Resources": {
+        "BonzaiBooking": {
+          "Type": "AWS::DynamoDB::Table",
+          "Properties": {
+            "TableName": "Bookings",
+            "AttributeDefinitions": [
+              {
+                "AttributeName": "BookingId",
+                "AttributeType": "S"
+              }
+            ],
+            "KeySchema": [
+              {
+                "AttributeName": "BookingId",
+                "KeyType": "HASH"
+              }
+            ],
+            "BillingMode": "PAY_PER_REQUEST"
+          }
+        },
+        "BonzaiRooms": {
+          "Type": "AWS::DynamoDB::Table",
+          "Properties": {
+            "TableName": "Rooms",
+            "AttributeDefinitions": [
+              {
+                "AttributeName": "roomId",
+                "AttributeType": "S"
+              },
+              {
+                "AttributeName": "date",
+                "AttributeType": "S"
+              }
+            ],
+            "KeySchema": [
+              {
+                "AttributeName": "roomId",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "date",
+                "KeyType": "RANGE"
+              }
+            ],
+            "BillingMode": "PAY_PER_REQUEST"
+          }
+        }
+      },
+      "Outputs": {}
+    },
+    "configValidationMode": "warn",
+    "serviceFilename": "serverless.yml",
+    "initialServerlessConfig": {
+      "org": "egilramsten",
+      "service": "Bonzai",
+      "provider": {
+        "$ref": "$[\"service\"][\"provider\"]"
+      },
+      "build": {
+        "esbuild": {
+          "minify": true
+        }
+      },
+      "package": {
+        "individually": true,
+        "artifactsS3KeyDirname": "serverless/Bonzai/dev/code-artifacts",
+        "deploymentBucket": "serverless-framework-deployments-eu-north-1-9c7e3e1b-48dd",
+        "artifactDirectoryName": "serverless/Bonzai/dev/1726651130638-2024-09-18T09:18:50.638Z"
+      },
+      "resources": {
+        "$ref": "$[\"service\"][\"resources\"]"
+      },
+      "functions": null
+    },
+    "appId": null,
+    "org": "egilramsten",
+    "orgId": null,
+    "build": {
+      "$ref": "$[\"service\"][\"initialServerlessConfig\"][\"build\"]"
+    },
+    "layers": {}
+  },
+  "package": {
+    "individually": true,
+    "artifactDirectoryName": "serverless/Bonzai/dev/1726651130638-2024-09-18T09:18:50.638Z",
+    "artifact": ""
+  }
+}
