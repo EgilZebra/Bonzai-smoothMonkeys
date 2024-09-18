@@ -29,7 +29,7 @@ functions:
     events:
       - httpApi:
           path: /bonzai/emp/reservation
-          method: GET
+          method: POST
 
   # roomReservation:
   #   handler: functions/Employee/roomReservation/index.handler

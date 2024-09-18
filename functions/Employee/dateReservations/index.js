@@ -10,7 +10,9 @@ const ddbDocClient = DynamoDBDocumentClient.from(client);
 const TABLE_NAME = process.env.TABLE_NAME_ROOMS;
 
 exports.handler = async (event) => {
-  const date = 240101;
+  // Parse the body to extract the date
+  const requestBody = JSON.parse(event.body);
+  const date = requestBody.date; // Assuming the date is passed as a property in the body
 
   // Validate date format (6 digits, numeric)
   if (!date || !/^\d{6}$/.test(date)) {
@@ -25,7 +27,7 @@ exports.handler = async (event) => {
 
   try {
     const params = {
-      TableName: "Rooms",
+      TableName: "Rooms", // Use the table name from the environment variable
     };
 
     const data = await ddbDocClient.send(new ScanCommand(params));
