@@ -60,7 +60,7 @@ resources:
     BonzaiBooking:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: Bookings
+        TableName: ${env:TABLE_NAME_BOOKINGS}
         AttributeDefinitions:
           - AttributeName: BookingId
             AttributeType: "S"
@@ -71,7 +71,7 @@ resources:
     BonzaiRooms:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: Rooms
+        TableName: ${env:TABLE_NAME_ROOMS}
         AttributeDefinitions:
           - AttributeName: roomId
             AttributeType: "S"
