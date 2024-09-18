@@ -53,7 +53,7 @@ resourses:
         AttributeDefinitions:
           - AttributeName: roomId
             AttributeType: "S"
-          - AttributeName: dates
+          - AttributeName: date
             AttributeType: "S"   
           - AttributeName: bookingId
             AttributeType: "S"       

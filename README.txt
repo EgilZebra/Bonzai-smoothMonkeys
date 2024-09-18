@@ -51,6 +51,16 @@ endpoints och functioner.
 						 -Namn och e-postaddress på den som bokar
 						 -Ett id på bokning (detta kan dock genereras på backend med exempelvis uuid eller nanoid )
 
+
+						{
+                					rooms: { 0, 0, 0 },
+                					guests: ,
+                					checkIn:,
+                					checkOut:,
+                					name:,
+                					email: 
+						}
+
 					Bekräftelsen ska innehålla:
 						- Bokningsnummer
 						- Antalet gäster och rum
@@ -107,3 +117,17 @@ Github
 		 X vem skapar repo
 		 X main - dev - ticket  struktur på branches
 		 - 
+
+
+
+
+
+
+
+
+
+functioner
+		Kolla vilka rum som är lediga den dagen
+		funktion för att skapa rum/datum entries i rum-tabellen.
+
+	
