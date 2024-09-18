@@ -2,7 +2,6 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
   ScanCommand,
-  UpdateCommand,
   GetCommand,
   DeleteCommand,
 } from "@aws-sdk/lib-dynamodb";
@@ -55,32 +54,31 @@ exports.handler = async (event) => {
 
     if (scanResult.Items && scanResult.Items.length > 0) {
       for (const item of scanResult.Items) {
-        const updateParams = {
+        const deleteRoomParams = {
           TableName: "Rooms",
           Key: {
             roomId: item.roomId,
             date: item.date,
           },
-          UpdateExpression: "REMOVE bookingId",
         };
 
-        await dynamoDb.send(new UpdateCommand(updateParams));
+        await dynamoDb.send(new DeleteCommand(deleteRoomParams));
       }
     }
 
-    const deleteParams = {
+    const deleteBookingParams = {
       TableName: "Bookings",
       Key: {
         BookingId: bookingId,
       },
     };
 
-    await dynamoDb.send(new DeleteCommand(deleteParams));
+    await dynamoDb.send(new DeleteCommand(deleteBookingParams));
 
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: `Booking with BookingId ${bookingId} was successfully deleted, and bookingId was cleared from ${scanResult.Items.length} rooms.`,
+        message: `Booking with BookingId ${bookingId} was successfully deleted, and ${scanResult.Items.length} rooms were removed.`,
       }),
     };
   } catch (error) {
