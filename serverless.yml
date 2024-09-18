@@ -7,6 +7,8 @@ provider:
   name: aws
   runtime: nodejs20.x
   region: eu-north-1
+  iam: 
+    role: arn:aws:iam::390403901188:role/lambda-tester
 
 build:
   esbuild:
@@ -17,41 +19,41 @@ package:
 
 functions:
   allReservations:
-    handler: functions/Employee/allReservations/index.handler
+    handler: /functions/Employee/allReservations/index.handler
     events:
       - httpApi:
-          path: ""
+          path: "/bonzai/emp/reservation"
           method: GET
-  dateReservations:
-    handler: functions/Employee/dateReservations/index.handler
-    events:
-      - httpApi:
-          path: ""
-          method: GET
-  roomReservation:
-    handler: functions/Employee/roomReservation/index.handler
-    events:
-      - httpApi:
-          path: ""
-          method: GET
-  cancelReservation:
-    handler: functions/Guest/cancelReservation/index.handler
-    events:
-      - httpApi:
-          path: ""
-          method: DELETE
+  # dateReservations:
+  #   handler: functions/Employee/dateReservations/index.handler
+  #   events:
+  #     - httpApi:
+  #         path: "/bonzai/emp/reservation/{date}"
+  #         method: GET
+  # roomReservation:
+  #   handler: functions/Employee/roomReservation/index.handler
+  #   events:
+  #     - httpApi:
+  #         path: "/bonzai/emp/reservation/{id}"
+  #         method: GET
+  # cancelReservation:
+  #   handler: functions/Guest/cancelReservation/index.handler
+  #   events:
+  #     - httpApi:
+  #         path: "/bonzai/guest/avboka"
+  #         method: DELETE
   makeReservation:
-    handler: functions/Guest/makeReservation/index.handler
+    handler: /functions/Guest/makeReservation/index.handler
     events:
       - httpApi:
-          path: ""
+          path: "/bonazi/guest/boka"
           method: POST
-  remakeReservation:
-    handler: functions/Guest/remakeReservation/index.handler
-    events:
-      - httpApi:
-          path: "a"
-          method: PUT
+  # remakeReservation:
+  #   handler: functions/Guest/remakeReservation/index.handler
+  #   events:
+  #     - httpApi:
+  #         path: "/bonzai/guest/omboka"
+  #         method: PUT
           
 
 resources:

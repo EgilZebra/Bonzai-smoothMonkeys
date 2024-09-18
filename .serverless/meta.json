@@ -18,12 +18,263 @@
         "name": "aws",
         "runtime": "nodejs20.x",
         "region": "eu-north-1",
+        "iam": {
+          "role": "arn:aws:iam::390403901188:role/lambda-tester"
+        },
         "stage": "dev",
         "versionFunctions": true,
         "compiledCloudFormationTemplate": {
           "AWSTemplateFormatVersion": "2010-09-09",
           "Description": "The AWS CloudFormation template for this Serverless application",
           "Resources": {
+            "AllReservationsLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/Bonzai-dev-allReservations"
+              }
+            },
+            "MakeReservationLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/Bonzai-dev-makeReservation"
+              }
+            },
+            "AllReservationsLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-eu-north-1-9c7e3e1b-48dd",
+                  "S3Key": "serverless/Bonzai/dev/1726656666410-2024-09-18T10:51:06.410Z/Bonzai-allReservations.zip"
+                },
+                "Handler": "/functions/Employee/allReservations/index.handler",
+                "Runtime": "nodejs20.x",
+                "FunctionName": "Bonzai-dev-allReservations",
+                "MemorySize": 1024,
+                "Timeout": 6,
+                "Environment": {
+                  "Variables": {
+                    "NODE_OPTIONS": "--enable-source-maps"
+                  }
+                },
+                "Role": "arn:aws:iam::390403901188:role/lambda-tester"
+              },
+              "DependsOn": [
+                "AllReservationsLogGroup"
+              ]
+            },
+            "MakeReservationLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-eu-north-1-9c7e3e1b-48dd",
+                  "S3Key": "serverless/Bonzai/dev/1726656666410-2024-09-18T10:51:06.410Z/Bonzai-makeReservation.zip"
+                },
+                "Handler": "/functions/Guest/makeReservation/index.handler",
+                "Runtime": "nodejs20.x",
+                "FunctionName": "Bonzai-dev-makeReservation",
+                "MemorySize": 1024,
+                "Timeout": 6,
+                "Environment": {
+                  "Variables": {
+                    "NODE_OPTIONS": "--enable-source-maps"
+                  }
+                },
+                "Role": "arn:aws:iam::390403901188:role/lambda-tester"
+              },
+              "DependsOn": [
+                "MakeReservationLogGroup"
+              ]
+            },
+            "AllReservationsLambdaVersionLEW2XbwU9d3uG7patsrOkm8GmDGEaWqtOo9K3HmHE": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "AllReservationsLambdaFunction"
+                },
+                "CodeSha256": "2WboIHYHK4YDmCsDGCJVSasAO6Y4UuJGafnMVzklUj0="
+              }
+            },
+            "MakeReservationLambdaVersion6vxwmgDi677Afk3h0keXO39s1XgGGZVbfg0KV3lvvIM": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "MakeReservationLambdaFunction"
+                },
+                "CodeSha256": "F/hs0/p8n32yY03M7+uxENz2G3dnpcS3Yy2nkh8L1EE="
+              }
+            },
+            "HttpApi": {
+              "Type": "AWS::ApiGatewayV2::Api",
+              "Properties": {
+                "Name": "dev-Bonzai",
+                "ProtocolType": "HTTP"
+              }
+            },
+            "HttpApiStage": {
+              "Type": "AWS::ApiGatewayV2::Stage",
+              "Properties": {
+                "ApiId": {
+                  "Ref": "HttpApi"
+                },
+                "StageName": "$default",
+                "AutoDeploy": true,
+                "DefaultRouteSettings": {
+                  "DetailedMetricsEnabled": false
+                }
+              }
+            },
+            "AllReservationsLambdaPermissionHttpApi": {
+              "Type": "AWS::Lambda::Permission",
+              "Properties": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "AllReservationsLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "apigateway.amazonaws.com",
+                "SourceArn": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":execute-api:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":",
+                      {
+                        "Ref": "HttpApi"
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              }
+            },
+            "HttpApiIntegrationAllReservations": {
+              "Type": "AWS::ApiGatewayV2::Integration",
+              "Properties": {
+                "ApiId": {
+                  "Ref": "HttpApi"
+                },
+                "IntegrationType": "AWS_PROXY",
+                "IntegrationUri": {
+                  "Fn::GetAtt": [
+                    "AllReservationsLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "PayloadFormatVersion": "2.0",
+                "TimeoutInMillis": 30000
+              }
+            },
+            "HttpApiRouteGetBonzaiEmpReservation": {
+              "Type": "AWS::ApiGatewayV2::Route",
+              "Properties": {
+                "ApiId": {
+                  "Ref": "HttpApi"
+                },
+                "RouteKey": "GET /bonzai/emp/reservation",
+                "Target": {
+                  "Fn::Join": [
+                    "/",
+                    [
+                      "integrations",
+                      {
+                        "Ref": "HttpApiIntegrationAllReservations"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "DependsOn": "HttpApiIntegrationAllReservations"
+            },
+            "MakeReservationLambdaPermissionHttpApi": {
+              "Type": "AWS::Lambda::Permission",
+              "Properties": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "MakeReservationLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "apigateway.amazonaws.com",
+                "SourceArn": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":execute-api:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":",
+                      {
+                        "Ref": "HttpApi"
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              }
+            },
+            "HttpApiIntegrationMakeReservation": {
+              "Type": "AWS::ApiGatewayV2::Integration",
+              "Properties": {
+                "ApiId": {
+                  "Ref": "HttpApi"
+                },
+                "IntegrationType": "AWS_PROXY",
+                "IntegrationUri": {
+                  "Fn::GetAtt": [
+                    "MakeReservationLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "PayloadFormatVersion": "2.0",
+                "TimeoutInMillis": 30000
+              }
+            },
+            "HttpApiRoutePostBonaziGuestBoka": {
+              "Type": "AWS::ApiGatewayV2::Route",
+              "Properties": {
+                "ApiId": {
+                  "Ref": "HttpApi"
+                },
+                "RouteKey": "POST /bonazi/guest/boka",
+                "Target": {
+                  "Fn::Join": [
+                    "/",
+                    [
+                      "integrations",
+                      {
+                        "Ref": "HttpApiIntegrationMakeReservation"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "DependsOn": "HttpApiIntegrationMakeReservation"
+            },
             "BonzaiBooking": {
               "Type": "AWS::DynamoDB::Table",
               "Properties": {
@@ -77,9 +328,62 @@
               "Export": {
                 "Name": "sls-Bonzai-dev-ServerlessDeploymentBucketName"
               }
+            },
+            "AllReservationsLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "AllReservationsLambdaVersionLEW2XbwU9d3uG7patsrOkm8GmDGEaWqtOo9K3HmHE"
+              },
+              "Export": {
+                "Name": "sls-Bonzai-dev-AllReservationsLambdaFunctionQualifiedArn"
+              }
+            },
+            "MakeReservationLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "MakeReservationLambdaVersion6vxwmgDi677Afk3h0keXO39s1XgGGZVbfg0KV3lvvIM"
+              },
+              "Export": {
+                "Name": "sls-Bonzai-dev-MakeReservationLambdaFunctionQualifiedArn"
+              }
+            },
+            "HttpApiId": {
+              "Description": "Id of the HTTP API",
+              "Value": {
+                "Ref": "HttpApi"
+              },
+              "Export": {
+                "Name": "sls-Bonzai-dev-HttpApiId"
+              }
+            },
+            "HttpApiUrl": {
+              "Description": "URL of the HTTP API",
+              "Value": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "https://",
+                    {
+                      "Ref": "HttpApi"
+                    },
+                    ".execute-api.",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ".",
+                    {
+                      "Ref": "AWS::URLSuffix"
+                    }
+                  ]
+                ]
+              },
+              "Export": {
+                "Name": "sls-Bonzai-dev-HttpApiUrl"
+              }
             }
           }
-        }
+        },
+        "vpc": {}
       },
       "build": {
         "esbuild": {
@@ -90,7 +394,59 @@
         "individually": true,
         "artifactsS3KeyDirname": "serverless/Bonzai/dev/code-artifacts",
         "deploymentBucket": "serverless-framework-deployments-eu-north-1-9c7e3e1b-48dd",
-        "artifactDirectoryName": "serverless/Bonzai/dev/1726651130638-2024-09-18T09:18:50.638Z"
+        "artifactDirectoryName": "serverless/Bonzai/dev/1726656666410-2024-09-18T10:51:06.410Z"
+      },
+      "functions": {
+        "allReservations": {
+          "handler": "/functions/Employee/allReservations/index.handler",
+          "events": [
+            {
+              "httpApi": {
+                "path": "/bonzai/emp/reservation",
+                "method": "GET"
+              },
+              "resolvedMethod": "GET",
+              "resolvedPath": "/bonzai/emp/reservation"
+            }
+          ],
+          "name": "Bonzai-dev-allReservations",
+          "environment": {
+            "NODE_OPTIONS": "--enable-source-maps"
+          },
+          "package": {
+            "artifact": "C:\\Users\\Egil\\JavaScript utbildning 23-25\\BACKEND-FÖRDJUPNING\\Bonzai\\.serverless\\build\\Bonzai-allReservations.zip"
+          },
+          "memory": 1024,
+          "timeout": 6,
+          "runtime": "nodejs20.x",
+          "vpc": {},
+          "versionLogicalId": "AllReservationsLambdaVersionLEW2XbwU9d3uG7patsrOkm8GmDGEaWqtOo9K3HmHE"
+        },
+        "makeReservation": {
+          "handler": "/functions/Guest/makeReservation/index.handler",
+          "events": [
+            {
+              "httpApi": {
+                "path": "/bonazi/guest/boka",
+                "method": "POST"
+              },
+              "resolvedMethod": "POST",
+              "resolvedPath": "/bonazi/guest/boka"
+            }
+          ],
+          "name": "Bonzai-dev-makeReservation",
+          "environment": {
+            "NODE_OPTIONS": "--enable-source-maps"
+          },
+          "package": {
+            "artifact": "C:\\Users\\Egil\\JavaScript utbildning 23-25\\BACKEND-FÖRDJUPNING\\Bonzai\\.serverless\\build\\Bonzai-makeReservation.zip"
+          },
+          "memory": 1024,
+          "timeout": 6,
+          "runtime": "nodejs20.x",
+          "vpc": {},
+          "versionLogicalId": "MakeReservationLambdaVersion6vxwmgDi677Afk3h0keXO39s1XgGGZVbfg0KV3lvvIM"
+        }
       },
       "resources": {
         "Resources": {
@@ -142,10 +498,9 @@
           }
         },
         "Outputs": {}
-      },
-      "functions": null
+      }
     },
-    "serviceRawFile": "\r\norg: egilramsten\r\n\r\nservice: Bonzai\r\n    \r\nprovider:\r\n  name: aws\r\n  runtime: nodejs20.x\r\n  region: eu-north-1\r\n\r\nbuild:\r\n  esbuild:\r\n    minify: true\r\n\r\npackage:\r\n  individually: true\r\n\r\nfunctions:\r\n\r\n\r\n\r\nresources:\r\n  Resources:\r\n    BonzaiBooking:\r\n      Type: AWS::DynamoDB::Table\r\n      Properties:\r\n        TableName: Bookings\r\n        AttributeDefinitions:\r\n          - AttributeName: BookingId\r\n            AttributeType: \"S\"\r\n        KeySchema:\r\n          - AttributeName: BookingId\r\n            KeyType: HASH\r\n        BillingMode: PAY_PER_REQUEST\r\n    BonzaiRooms:\r\n      Type: AWS::DynamoDB::Table\r\n      Properties:\r\n        TableName: Rooms\r\n        AttributeDefinitions:\r\n          - AttributeName: roomId\r\n            AttributeType: \"S\"\r\n          - AttributeName: date\r\n            AttributeType: \"S\"         \r\n        KeySchema:\r\n          - AttributeName: roomId\r\n            KeyType: HASH\r\n          - AttributeName: date\r\n            KeyType: RANGE\r\n        BillingMode: PAY_PER_REQUEST",
+    "serviceRawFile": "\r\norg: egilramsten\r\n\r\nservice: Bonzai\r\n    \r\nprovider:\r\n  name: aws\r\n  runtime: nodejs20.x\r\n  region: eu-north-1\r\n  iam: \r\n    role: arn:aws:iam::390403901188:role/lambda-tester\r\n\r\nbuild:\r\n  esbuild:\r\n    minify: true\r\n\r\npackage:\r\n  individually: true\r\n\r\nfunctions:\r\n  allReservations:\r\n    handler: /functions/Employee/allReservations/index.handler\r\n    events:\r\n      - httpApi:\r\n          path: \"/bonzai/emp/reservation\"\r\n          method: GET\r\n  # dateReservations:\r\n  #   handler: functions/Employee/dateReservations/index.handler\r\n  #   events:\r\n  #     - httpApi:\r\n  #         path: \"/bonzai/emp/reservation/{date}\"\r\n  #         method: GET\r\n  # roomReservation:\r\n  #   handler: functions/Employee/roomReservation/index.handler\r\n  #   events:\r\n  #     - httpApi:\r\n  #         path: \"/bonzai/emp/reservation/{id}\"\r\n  #         method: GET\r\n  # cancelReservation:\r\n  #   handler: functions/Guest/cancelReservation/index.handler\r\n  #   events:\r\n  #     - httpApi:\r\n  #         path: \"/bonzai/guest/avboka\"\r\n  #         method: DELETE\r\n  makeReservation:\r\n    handler: /functions/Guest/makeReservation/index.handler\r\n    events:\r\n      - httpApi:\r\n          path: \"/bonazi/guest/boka\"\r\n          method: POST\r\n  # remakeReservation:\r\n  #   handler: functions/Guest/remakeReservation/index.handler\r\n  #   events:\r\n  #     - httpApi:\r\n  #         path: \"/bonzai/guest/omboka\"\r\n  #         method: PUT\r\n          \r\n\r\nresources:\r\n  Resources:\r\n    BonzaiBooking:\r\n      Type: AWS::DynamoDB::Table\r\n      Properties:\r\n        TableName: Bookings\r\n        AttributeDefinitions:\r\n          - AttributeName: BookingId\r\n            AttributeType: \"S\"\r\n        KeySchema:\r\n          - AttributeName: BookingId\r\n            KeyType: HASH\r\n        BillingMode: PAY_PER_REQUEST\r\n    BonzaiRooms:\r\n      Type: AWS::DynamoDB::Table\r\n      Properties:\r\n        TableName: Rooms\r\n        AttributeDefinitions:\r\n          - AttributeName: roomId\r\n            AttributeType: \"S\"\r\n          - AttributeName: date\r\n            AttributeType: \"S\"         \r\n        KeySchema:\r\n          - AttributeName: roomId\r\n            KeyType: HASH\r\n          - AttributeName: date\r\n            KeyType: RANGE\r\n        BillingMode: PAY_PER_REQUEST",
     "command": [
       "deploy"
     ],
@@ -181,13 +536,37 @@
     "serviceUniqueId": "arn:aws:cloudformation:eu-north-1:390403901188:stack/Bonzai-dev/05696da0-759f-11ef-b52d-06906e9b8a0d",
     "serviceProviderAwsCfStackId": "arn:aws:cloudformation:eu-north-1:390403901188:stack/Bonzai-dev/05696da0-759f-11ef-b52d-06906e9b8a0d",
     "serviceProviderAwsCfStackCreated": "2024-09-18T09:18:52.391Z",
-    "serviceProviderAwsCfStackUpdated": null,
-    "serviceProviderAwsCfStackStatus": "CREATE_COMPLETE",
+    "serviceProviderAwsCfStackUpdated": "2024-09-18T10:51:08.783Z",
+    "serviceProviderAwsCfStackStatus": "UPDATE_COMPLETE",
     "serviceProviderAwsCfStackOutputs": [
+      {
+        "OutputKey": "AllReservationsLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:eu-north-1:390403901188:function:Bonzai-dev-allReservations:10",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-Bonzai-dev-AllReservationsLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "HttpApiId",
+        "OutputValue": "a1i2fc7oig",
+        "Description": "Id of the HTTP API",
+        "ExportName": "sls-Bonzai-dev-HttpApiId"
+      },
       {
         "OutputKey": "ServerlessDeploymentBucketName",
         "OutputValue": "serverless-framework-deployments-eu-north-1-9c7e3e1b-48dd",
         "ExportName": "sls-Bonzai-dev-ServerlessDeploymentBucketName"
+      },
+      {
+        "OutputKey": "MakeReservationLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:eu-north-1:390403901188:function:Bonzai-dev-makeReservation:10",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-Bonzai-dev-MakeReservationLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "HttpApiUrl",
+        "OutputValue": "https://a1i2fc7oig.execute-api.eu-north-1.amazonaws.com",
+        "Description": "URL of the HTTP API",
+        "ExportName": "sls-Bonzai-dev-HttpApiUrl"
       }
     ]
   }

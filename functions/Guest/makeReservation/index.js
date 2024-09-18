@@ -7,12 +7,15 @@ exports.handler = async (event) => {
     
     // guets: string, rooms: [ number, number, number ], checkIn: Date, checkOut: Date, name: String, emil: String
     const { guests, rooms, checkIn, checkOut, name, email } = JSON.parse(event.body);
+    console.log( guests, rooms, checkIn, checkOut, name, email );
     const bookingID = uuidv4();
 
     try {
         const bookedRooms = avalibleRooms( rooms, checkIn, checkOut, bookingID )
+        console.log(bookedRooms);
         const totalprice = priceCalc( bookedRooms )
-        await db.put({
+        console.log(totalprice);
+        const answer = await db.put({
             TableName: "Bookings",
             Item: {
                 BookingId: bookingID,
@@ -25,7 +28,7 @@ exports.handler = async (event) => {
                 email: email
             }  
         })
-        return responseMaker(200,  )
+        return responseMaker(200, answer  )
     } catch (error) {
         return responseMaker( 500, )
     } 
