@@ -21,7 +21,7 @@ functions:
     handler: functions/Employee/allReservations/index.handler
     events:
       - httpApi:
-          path: /bonzai/emp/reservation2
+          path: /bonzai/emp/reservation
           method: GET
 
   dateReservations:
