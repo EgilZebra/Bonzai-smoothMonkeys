@@ -21,15 +21,16 @@ functions:
     handler: functions/Employee/allReservations/index.handler
     events:
       - httpApi:
+          path: /bonzai/emp/reservation2
+          method: GET
+
+  dateReservations:
+    handler: functions/Employee/dateReservations/index.handler
+    events:
+      - httpApi:
           path: /bonzai/emp/reservation
           method: GET
 
-  # dateReservations:
-  #   handler: functions/Employee/dateReservations/index.handler
-  #   events:
-  #     - httpApi:
-  #         path: "/bonzai/emp/reservation/{date}"
-  #         method: GET
   # roomReservation:
   #   handler: functions/Employee/roomReservation/index.handler
   #   events:
@@ -74,9 +75,9 @@ resources:
         TableName: ${env:TABLE_NAME_ROOMS}
         AttributeDefinitions:
           - AttributeName: roomId
-            AttributeType: "S"
+            AttributeType: "N"
           - AttributeName: date
-            AttributeType: "S"
+            AttributeType: "N"
         KeySchema:
           - AttributeName: roomId
             KeyType: HASH
