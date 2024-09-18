@@ -16,8 +16,43 @@ package:
   individually: true
 
 functions:
-
-
+  allReservations:
+    handler: functions/Employee/allReservations/index.handler
+    events:
+      - httpApi:
+          path: ""
+          method: GET
+  dateReservations:
+    handler: functions/Employee/dateReservations/index.handler
+    events:
+      - httpApi:
+          path: ""
+          method: GET
+  roomReservation:
+    handler: functions/Employee/roomReservation/index.handler
+    events:
+      - httpApi:
+          path: ""
+          method: GET
+  cancelReservation:
+    handler: functions/Guest/cancelReservation/index.handler
+    events:
+      - httpApi:
+          path: ""
+          method: DELETE
+  makeReservation:
+    handler: functions/Guest/makeReservation/index.handler
+    events:
+      - httpApi:
+          path: ""
+          method: POST
+  remakeReservation:
+    handler: functions/Guest/remakeReservation/index.handler
+    events:
+      - httpApi:
+          path: "a"
+          method: PUT
+          
 
 resourses:
   Resources:
