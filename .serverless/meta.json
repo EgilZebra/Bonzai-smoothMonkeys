@@ -1,18 +1,194 @@
 {
-  "unknown": {
+  "C:\\Users\\Egil\\JavaScript utbildning 23-25\\BACKEND-FÖRDJUPNING\\Bonzai": {
     "versionSfCore": null,
-    "versionFramework": "4.3.2",
+    "versionFramework": "4.3.3",
     "isWithinCompose": false,
+    "isCompose": false,
     "composeOrgName": null,
+    "composeResolverProviders": {
+      "default-aws-credential-resolver": "<REDACTED>"
+    },
     "composeServiceName": null,
-    "command": [],
+    "servicePath": "C:\\Users\\Egil\\JavaScript utbildning 23-25\\BACKEND-FÖRDJUPNING\\Bonzai",
+    "serviceConfigFileName": "serverless.yml",
+    "service": {
+      "org": "egilramsten",
+      "service": "Bonzai",
+      "provider": {
+        "name": "aws",
+        "runtime": "nodejs20.x",
+        "region": "eu-north-1",
+        "stage": "dev",
+        "versionFunctions": true,
+        "compiledCloudFormationTemplate": {
+          "AWSTemplateFormatVersion": "2010-09-09",
+          "Description": "The AWS CloudFormation template for this Serverless application",
+          "Resources": {
+            "BonzaiBooking": {
+              "Type": "AWS::DynamoDB::Table",
+              "Properties": {
+                "TableName": "Bookings",
+                "AttributeDefinitions": [
+                  {
+                    "AttributeName": "BookingId",
+                    "AttributeType": "S"
+                  }
+                ],
+                "KeySchema": [
+                  {
+                    "AttributeName": "BookingId",
+                    "KeyType": "HASH"
+                  }
+                ],
+                "BillingMode": "PAY_PER_REQUEST"
+              }
+            },
+            "BonzaiRooms": {
+              "Type": "AWS::DynamoDB::Table",
+              "Properties": {
+                "TableName": "Rooms",
+                "AttributeDefinitions": [
+                  {
+                    "AttributeName": "roomId",
+                    "AttributeType": "S"
+                  },
+                  {
+                    "AttributeName": "date",
+                    "AttributeType": "S"
+                  }
+                ],
+                "KeySchema": [
+                  {
+                    "AttributeName": "roomId",
+                    "KeyType": "HASH"
+                  },
+                  {
+                    "AttributeName": "date",
+                    "KeyType": "RANGE"
+                  }
+                ],
+                "BillingMode": "PAY_PER_REQUEST"
+              }
+            }
+          },
+          "Outputs": {
+            "ServerlessDeploymentBucketName": {
+              "Value": "serverless-framework-deployments-eu-north-1-9c7e3e1b-48dd",
+              "Export": {
+                "Name": "sls-Bonzai-dev-ServerlessDeploymentBucketName"
+              }
+            }
+          }
+        }
+      },
+      "build": {
+        "esbuild": {
+          "minify": true
+        }
+      },
+      "package": {
+        "individually": true,
+        "artifactsS3KeyDirname": "serverless/Bonzai/dev/code-artifacts",
+        "deploymentBucket": "serverless-framework-deployments-eu-north-1-9c7e3e1b-48dd",
+        "artifactDirectoryName": "serverless/Bonzai/dev/1726651130638-2024-09-18T09:18:50.638Z"
+      },
+      "resources": {
+        "Resources": {
+          "BonzaiBooking": {
+            "Type": "AWS::DynamoDB::Table",
+            "Properties": {
+              "TableName": "Bookings",
+              "AttributeDefinitions": [
+                {
+                  "AttributeName": "BookingId",
+                  "AttributeType": "S"
+                }
+              ],
+              "KeySchema": [
+                {
+                  "AttributeName": "BookingId",
+                  "KeyType": "HASH"
+                }
+              ],
+              "BillingMode": "PAY_PER_REQUEST"
+            }
+          },
+          "BonzaiRooms": {
+            "Type": "AWS::DynamoDB::Table",
+            "Properties": {
+              "TableName": "Rooms",
+              "AttributeDefinitions": [
+                {
+                  "AttributeName": "roomId",
+                  "AttributeType": "S"
+                },
+                {
+                  "AttributeName": "date",
+                  "AttributeType": "S"
+                }
+              ],
+              "KeySchema": [
+                {
+                  "AttributeName": "roomId",
+                  "KeyType": "HASH"
+                },
+                {
+                  "AttributeName": "date",
+                  "KeyType": "RANGE"
+                }
+              ],
+              "BillingMode": "PAY_PER_REQUEST"
+            }
+          }
+        },
+        "Outputs": {}
+      },
+      "functions": null
+    },
+    "serviceRawFile": "\r\norg: egilramsten\r\n\r\nservice: Bonzai\r\n    \r\nprovider:\r\n  name: aws\r\n  runtime: nodejs20.x\r\n  region: eu-north-1\r\n\r\nbuild:\r\n  esbuild:\r\n    minify: true\r\n\r\npackage:\r\n  individually: true\r\n\r\nfunctions:\r\n\r\n\r\n\r\nresources:\r\n  Resources:\r\n    BonzaiBooking:\r\n      Type: AWS::DynamoDB::Table\r\n      Properties:\r\n        TableName: Bookings\r\n        AttributeDefinitions:\r\n          - AttributeName: BookingId\r\n            AttributeType: \"S\"\r\n        KeySchema:\r\n          - AttributeName: BookingId\r\n            KeyType: HASH\r\n        BillingMode: PAY_PER_REQUEST\r\n    BonzaiRooms:\r\n      Type: AWS::DynamoDB::Table\r\n      Properties:\r\n        TableName: Rooms\r\n        AttributeDefinitions:\r\n          - AttributeName: roomId\r\n            AttributeType: \"S\"\r\n          - AttributeName: date\r\n            AttributeType: \"S\"         \r\n        KeySchema:\r\n          - AttributeName: roomId\r\n            KeyType: HASH\r\n          - AttributeName: date\r\n            KeyType: RANGE\r\n        BillingMode: PAY_PER_REQUEST",
+    "command": [
+      "deploy"
+    ],
     "options": {},
     "error": null,
+    "params": {},
     "machineId": "9d05f8a5aab97fde5c67b4cd3993460d",
-    "serviceProviderAwsCfStackId": null,
-    "serviceProviderAwsCfStackCreated": null,
+    "stage": "dev",
+    "accessKeyV2": "<REDACTED>",
+    "accessKeyV1": "<REDACTED>",
+    "orgId": "e891c888-7e0d-4e7d-8d72-3ef6d46a1efe",
+    "orgName": "egilramsten",
+    "userId": "FskZH7cj9bNWd52Ssy",
+    "dashboard": {
+      "isEnabledForService": false,
+      "requiredAuthentication": false,
+      "orgFeaturesInUse": null,
+      "orgObservabilityIntegrations": null,
+      "serviceAppId": null,
+      "serviceProvider": null,
+      "instanceParameters": null
+    },
+    "userName": "egilramsten",
+    "subscription": null,
+    "userEmail": "egil.ramsten@hotmail.com",
+    "serviceProviderAwsRegion": "eu-north-1",
+    "serviceProviderAwsCredentials": "<REDACTED>",
+    "serviceProviderAwsAccountId": "390403901188",
+    "projectType": "traditional",
+    "versionSf": "4.3.3",
+    "serviceProviderAwsCfStackName": "Bonzai-dev",
+    "integrations": {},
+    "serviceUniqueId": "arn:aws:cloudformation:eu-north-1:390403901188:stack/Bonzai-dev/05696da0-759f-11ef-b52d-06906e9b8a0d",
+    "serviceProviderAwsCfStackId": "arn:aws:cloudformation:eu-north-1:390403901188:stack/Bonzai-dev/05696da0-759f-11ef-b52d-06906e9b8a0d",
+    "serviceProviderAwsCfStackCreated": "2024-09-18T09:18:52.391Z",
     "serviceProviderAwsCfStackUpdated": null,
-    "serviceProviderAwsCfStackStatus": null,
-    "serviceProviderAwsCfStackOutputs": null
+    "serviceProviderAwsCfStackStatus": "CREATE_COMPLETE",
+    "serviceProviderAwsCfStackOutputs": [
+      {
+        "OutputKey": "ServerlessDeploymentBucketName",
+        "OutputValue": "serverless-framework-deployments-eu-north-1-9c7e3e1b-48dd",
+        "ExportName": "sls-Bonzai-dev-ServerlessDeploymentBucketName"
+      }
+    ]
   }
 }

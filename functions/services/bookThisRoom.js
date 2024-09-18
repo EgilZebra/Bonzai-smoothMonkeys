@@ -6,7 +6,7 @@ const bookThisRoom = async ( room, date, bookingID ) => {
         TableName: "Rooms",
         Item: {
                 roomId: room,
-                dates: date,
+                date: date,
                 bookingId: bookingID
             }
         }) 

@@ -54,7 +54,7 @@ functions:
           method: PUT
           
 
-resourses:
+resources:
   Resources:
     BonzaiBooking:
       Type: AWS::DynamoDB::Table
@@ -63,23 +63,9 @@ resourses:
         AttributeDefinitions:
           - AttributeName: BookingId
             AttributeType: "S"
-          - AttributeName: rooms
-            AttributeType: "S"          
-          - AttributeName: guests
-            AttributeType: "S"          
-          - AttributeName: totalPrice
-            AttributeType: "N"          
-          - AttributeName: startDate
-            AttributeType: "S"
-          - AttributeName: endDate
-            AttributeType: "S"          
-          - AttributeName: customer 
-            AttributeType: "S"          
-          - AttributeName: email
-            AttributeType: "S"
         KeySchema:
           - AttributeName: BookingId
-          KeyType: HASH
+            KeyType: HASH
         BillingMode: PAY_PER_REQUEST
     BonzaiRooms:
       Type: AWS::DynamoDB::Table
@@ -88,11 +74,11 @@ resourses:
         AttributeDefinitions:
           - AttributeName: roomId
             AttributeType: "S"
-          - AttributeName: dates
-            AttributeType: "S"   
-          - AttributeName: bookingId
-            AttributeType: "S"       
+          - AttributeName: date
+            AttributeType: "S"         
         KeySchema:
           - AttributeName: roomId
-          KeyType: HASH
+            KeyType: HASH
+          - AttributeName: date
+            KeyType: RANGE
         BillingMode: PAY_PER_REQUEST

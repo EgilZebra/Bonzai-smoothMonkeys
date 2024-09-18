@@ -1,22 +1,24 @@
 import { responseMaker } from "../../services/responseMaker"
 import { db } from "../../../data"
 const { v4: uuidv4 } = require('uuid')
+import { priceCalc } from "../../services/priceCalc";
 
 exports.handler = async (event) => {
-
+    
+    // guets: string, rooms: [ number, number, number ], checkIn: Date, checkOut: Date, name: String, emil: String
     const { guests, rooms, checkIn, checkOut, name, email } = JSON.parse(event.body);
     const bookingID = uuidv4();
 
     try {
         const bookedRooms = avalibleRooms( rooms, checkIn, checkOut, bookingID )
-        const totalprice = priceCalc( 0, 2, 3 )
+        const totalprice = priceCalc( bookedRooms )
         await db.put({
             TableName: "Bookings",
             Item: {
                 BookingId: bookingID,
                 rooms: bookedRooms,
                 guests: guests,
-                totalprice:totalprice,
+                totalprice: totalprice,
                 startDate: checkIn,
                 endDate: checkOut,
                 customer: name,
