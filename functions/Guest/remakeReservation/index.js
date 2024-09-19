@@ -89,12 +89,27 @@ exports.handler = async (event) => {
   // Retrieve original booking using bookingId from the "Bookings" table
   const bookingResponse = await getBookingById(BookingId);
 
-  // Return the booking details or an error message (if booking is not found)
-  return bookingResponse;
-
-  // hämta orginal-bokningen med hjälp av bookingId i table Bookings
-  // ändra till mindre nätter, antal rum etc. => DELETE.
+  //check if there is a Booking w the bookingRef
+  if (!bookingResponse) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: "Booking not found",
+      }),
+    };
+  } else {
+    // Kontrollera om bokning är samma eller mindre, då kan vi bara köra delete
+    // 1. omvandla rumsnummer till rumstyp, 1-10 => single, 11-15=> double, 16-20 => suite
+    // 2. jämföra varje rumstyp och dateRange, är allt samma eller mindre i ombokningen ska vi köra en delete av entries i Rooms
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        bookingResponse,
+      }),
+    };
+  }
 
   //bryter ut alla nätter rum som är utöver orginal-bokningen
+  //kontrollera om de är ledia en efter en. ALLA lediga = boka med samma bokRef
   //roomstyp + datum => loopa igenom
 };
