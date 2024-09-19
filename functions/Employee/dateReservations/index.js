@@ -12,16 +12,6 @@ exports.handler = async (event) => {
   const requestBody = JSON.parse(event.body);
   const date = requestBody.date;
 
-  if (!date || !/^\d{6}$/.test(date)) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        message:
-          "Invalid or missing date. Please provide a valid date in YYMMDD format.",
-      }),
-    };
-  }
-
   try {
     const params = {
       TableName: "Rooms",
@@ -38,6 +28,7 @@ exports.handler = async (event) => {
       };
     }
 
+    // Filter room statuses based on the provided date in YYYY-MM-DD format
     const roomStatuses = data.Items.filter((item) => item.date === date).map(
       (item) => ({
         roomId: item.roomId,
@@ -59,6 +50,7 @@ exports.handler = async (event) => {
       totalBooked: 0,
     };
 
+    // Count the number of booked rooms based on room ID
     roomStatuses.forEach((status) => {
       const roomId = parseInt(status.roomId);
       if (roomId >= 1 && roomId <= 10) {
