@@ -9,105 +9,50 @@ const client = new DynamoDBClient();
 const ddbDocClient = DynamoDBDocumentClient.from(client);
 
 exports.handler = async (event) => {
-  const requestBody = JSON.parse(event.body);
-  const date = requestBody.date;
-
   try {
+    // Define the parameters to scan the Bookings table
     const params = {
-      TableName: "Rooms",
+      TableName: "Bookings",
     };
 
+    // Retrieve all bookings from the Bookings table
     const data = await ddbDocClient.send(new ScanCommand(params));
 
     if (!data.Items || data.Items.length === 0) {
       return {
         statusCode: 404,
         body: JSON.stringify({
-          message: "No entries found in the Rooms table.",
+          message: "No bookings found in the Bookings table.",
         }),
       };
     }
 
-    // Filter room statuses based on the provided date in YYYY-MM-DD format
-    const roomStatuses = data.Items.filter((item) => item.date === date).map(
-      (item) => ({
-        roomId: item.roomId,
-        date: item.date,
-        bookingId: item.bookingId || "Unknown",
-      })
-    );
+    // Map the data to only include the required fields
+    const bookings = data.Items.map((item) => ({
+      BookingId: item.BookingId || "Unknown",
+      checkIn: item.checkIn || "Unknown",
+      checkOut: item.checkOut || "Unknown",
+      guests: item.guests || 0,
+      rooms: item.rooms || [],
+      name: item.name || "Unknown",
+    }));
 
-    const totalAvailableRooms = {
-      single: 10, // Room IDs 1-10
-      double: 5, // Room IDs 11-15
-      suite: 5, // Room IDs 16-20
-    };
-
-    const summary = {
-      singleRoomsBooked: 0,
-      doubleRoomsBooked: 0,
-      suitesBooked: 0,
-      totalBooked: 0,
-    };
-
-    // Count the number of booked rooms based on room ID
-    roomStatuses.forEach((status) => {
-      const roomId = parseInt(status.roomId);
-      if (roomId >= 1 && roomId <= 10) {
-        summary.singleRoomsBooked++;
-      } else if (roomId >= 11 && roomId <= 15) {
-        summary.doubleRoomsBooked++;
-      } else if (roomId >= 16 && roomId <= 20) {
-        summary.suitesBooked++;
-      }
-    });
-
-    summary.totalBooked =
-      summary.singleRoomsBooked +
-      summary.doubleRoomsBooked +
-      summary.suitesBooked;
-
-    const calculatePercentage = (booked, total) =>
-      total > 0 ? ((booked / total) * 100).toFixed(2) : 0;
-
-    const percentageSummary = {
-      singleRoomBookingPercentage: calculatePercentage(
-        summary.singleRoomsBooked,
-        totalAvailableRooms.single
-      ),
-      doubleRoomBookingPercentage: calculatePercentage(
-        summary.doubleRoomsBooked,
-        totalAvailableRooms.double
-      ),
-      suiteBookingPercentage: calculatePercentage(
-        summary.suitesBooked,
-        totalAvailableRooms.suite
-      ),
-      totalBookingPercentage: calculatePercentage(
-        summary.totalBooked,
-        totalAvailableRooms.single +
-          totalAvailableRooms.double +
-          totalAvailableRooms.suite
-      ),
-    };
+    // Sort bookings by checkIn date (oldest first)
+    bookings.sort((a, b) => new Date(a.checkIn) - new Date(b.checkIn));
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         message: "Success",
-        roomStatuses: roomStatuses,
-        summary: {
-          ...summary,
-          ...percentageSummary,
-        },
+        bookings: bookings,
       }),
     };
   } catch (error) {
-    console.error("Error retrieving room entries:", error);
+    console.error("Error retrieving bookings:", error);
     return {
       statusCode: 500,
       body: JSON.stringify({
-        message: "Error retrieving room entries.",
+        message: "Error retrieving bookings.",
         error: error.message,
       }),
     };

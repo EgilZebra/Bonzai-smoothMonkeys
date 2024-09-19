@@ -19,7 +19,7 @@
       "Properties": {
         "Code": {
           "S3Bucket": "serverless-framework-deployments-eu-north-1-a731b4f2-3e0d",
-          "S3Key": "serverless/bonzai/dev/1726744339674-2024-09-19T11:12:19.674Z/bonzai-allReservations.zip"
+          "S3Key": "serverless/bonzai/dev/1726745090135-2024-09-19T11:24:50.135Z/bonzai-allReservations.zip"
         },
         "Handler": "functions/Employee/allReservations/index.handler",
         "Runtime": "nodejs20.x",
@@ -42,7 +42,7 @@
       "Properties": {
         "Code": {
           "S3Bucket": "serverless-framework-deployments-eu-north-1-a731b4f2-3e0d",
-          "S3Key": "serverless/bonzai/dev/1726744339674-2024-09-19T11:12:19.674Z/bonzai-dateReservations.zip"
+          "S3Key": "serverless/bonzai/dev/1726745090135-2024-09-19T11:24:50.135Z/bonzai-dateReservations.zip"
         },
         "Handler": "functions/Employee/dateReservations/index.handler",
         "Runtime": "nodejs20.x",
@@ -60,24 +60,24 @@
         "DateReservationsLogGroup"
       ]
     },
-    "AllReservationsLambdaVersionwbSeQHGoKxwFcmUoZA536EP8rXYpti5XzC1JIZcMzs": {
+    "AllReservationsLambdaVersionM2QN5aLqIg5JywCLD0LFZh3qyVBiKUPTlxXbMNjFplg": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "AllReservationsLambdaFunction"
         },
-        "CodeSha256": "cmDDLTN7VmkITd4Tt7eJga257qISt7VmNKAhkqCcqSs="
+        "CodeSha256": "tCcn+su4zPTNM+oJ203h7rzCt9L/QVJQqGsGymLtqfo="
       }
     },
-    "DateReservationsLambdaVersionx0qzEY9HthWyewc9yIb4GQbPYhpUy714Pyl8YSrFJsA": {
+    "DateReservationsLambdaVersionDIyEJA01I088hT60LvkQBdC7niW0V3VLuL7kNRWTTc": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "DateReservationsLambdaFunction"
         },
-        "CodeSha256": "9dZBFdsWaSQaYsU3sbT3BG9e1XEpjYgf99zflwM1b3s="
+        "CodeSha256": "Xo+a/Telte11h8z5HXxXmzzzRiVmhoxWu9wg62lnMnY="
       }
     },
     "HttpApi": {
@@ -229,13 +229,13 @@
         "TimeoutInMillis": 30000
       }
     },
-    "HttpApiRoutePostBonzaiEmpReservation": {
+    "HttpApiRouteGetBonzaiEmpReservationAll": {
       "Type": "AWS::ApiGatewayV2::Route",
       "Properties": {
         "ApiId": {
           "Ref": "HttpApi"
         },
-        "RouteKey": "POST /bonzai/emp/reservation",
+        "RouteKey": "GET /bonzai/emp/reservation/all",
         "Target": {
           "Fn::Join": [
             "/",
@@ -307,7 +307,7 @@
     "AllReservationsLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "AllReservationsLambdaVersionwbSeQHGoKxwFcmUoZA536EP8rXYpti5XzC1JIZcMzs"
+        "Ref": "AllReservationsLambdaVersionM2QN5aLqIg5JywCLD0LFZh3qyVBiKUPTlxXbMNjFplg"
       },
       "Export": {
         "Name": "sls-bonzai-dev-AllReservationsLambdaFunctionQualifiedArn"
@@ -316,7 +316,7 @@
     "DateReservationsLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "DateReservationsLambdaVersionx0qzEY9HthWyewc9yIb4GQbPYhpUy714Pyl8YSrFJsA"
+        "Ref": "DateReservationsLambdaVersionDIyEJA01I088hT60LvkQBdC7niW0V3VLuL7kNRWTTc"
       },
       "Export": {
         "Name": "sls-bonzai-dev-DateReservationsLambdaFunctionQualifiedArn"
