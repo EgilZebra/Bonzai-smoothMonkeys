@@ -137,9 +137,7 @@ exports.handler = async (event) => {
       checkOut,
     } = JSON.parse(event.body);
 
-    BookingId = "test1234";
-
-    // Check if the number of guests is valid
+    // Check if the number of guests is valid on the new booking.
     const parsedApiRooms = parseApiRooms(roomsString);
     if (!isGuestCountValid(guests, parsedApiRooms)) {
       return {
@@ -149,33 +147,13 @@ exports.handler = async (event) => {
         }),
       };
     }
-
-    // Get the original booking
-    const originalBooking = await getBookingById(BookingId);
-
-    if (originalBooking) {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          message: "Booking found.",
-          booking: originalBooking,
-        }),
-      };
-    } else {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({
-          error: "Booking NOT found.",
-        }),
-      };
-    }
   } catch (error) {
-    console.error("Error in handler:", error); // Log the full error object
+    console.error("Error in handler:", error);
     return {
       statusCode: 500,
       body: JSON.stringify({
         error: "An internal error occurred.",
-        message: error.message, // Include the error message for debugging
+        message: error.message,
       }),
     };
   }
