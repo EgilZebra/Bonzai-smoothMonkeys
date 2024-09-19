@@ -1,25 +1,15 @@
-// Import necessary modules
-const { db } = require("../../../data/index.js"); // Assuming 'db-file' is where you define the DynamoDB connection.
+const { db } = require("../../../data/index.js");
 
-// Define max capacity for each room type
-const MAX_SINGLE_ROOM_CAPACITY = 1; // Single room can hold 1 guest
-const MAX_DOUBLE_ROOM_CAPACITY = 2; // Double room can hold 2 guests
-const MAX_SUITE_ROOM_CAPACITY = 3; // Suite can hold 3 guests
-
-// Function to parse the API room input format (e.g., "1, 0, 1")
 function parseApiRooms(roomsString) {
   const [singleRooms, doubleRooms, suites] = roomsString.split(",").map(Number);
   return { singleRooms, doubleRooms, suites };
 }
-
-// Function to parse the database room format (e.g., "1, 2, 3")
 function parseDbRooms(roomsString) {
-  const roomIds = roomsString.split(",").map(Number); // Room IDs from the database
+  const roomIds = roomsString.split(",").map(Number);
   let singleRooms = 0;
   let doubleRooms = 0;
   let suites = 0;
 
-  // Loop through each room ID and categorize it
   roomIds.forEach((roomId) => {
     if (roomId >= 1 && roomId <= 10) {
       singleRooms++;
@@ -36,75 +26,109 @@ function parseDbRooms(roomsString) {
     suites,
   };
 }
-
-// Function to check if the guest count is valid based on room selection
 function isGuestCountValid(guests, rooms) {
+  const MAX_SINGLE_ROOM_CAPACITY = 1;
+  const MAX_DOUBLE_ROOM_CAPACITY = 2;
+  const MAX_SUITE_ROOM_CAPACITY = 3;
   const { singleRooms, doubleRooms, suites } = rooms;
-
-  // Calculate the total maximum capacity
   const totalCapacity =
     singleRooms * MAX_SINGLE_ROOM_CAPACITY +
     doubleRooms * MAX_DOUBLE_ROOM_CAPACITY +
     suites * MAX_SUITE_ROOM_CAPACITY;
 
   console.log(`Total Capacity: ${totalCapacity}, Guests: ${guests}`);
-
-  // Return true if the total guests can fit within the total room capacity
   return guests <= totalCapacity;
 }
-
-// Function to compare original booking and new booking
 function compareBookings(originalBooking, newBooking) {
-  // Extract the room counts for original (DB) and new booking (API)
-  const originalRooms = parseDbRooms(originalBooking.rooms); // Room IDs from DB
-  const newRooms = parseApiRooms(newBooking.rooms); // Room counts from API
+  const originalRooms = parseDbRooms(originalBooking.rooms);
+  const newRooms = parseApiRooms(newBooking.rooms);
 
   const isRoomValid =
     newRooms.singleRooms <= originalRooms.singleRooms &&
     newRooms.doubleRooms <= originalRooms.doubleRooms &&
-    newRooms.suites <= originalRooms.suites; // Missing the "suites" count comparison
+    newRooms.suites <= originalRooms.suites;
 
-  // Compare check-in and check-out dates (new booking dates should be the same or shorter)
   const isDateValid =
     new Date(newBooking.checkIn) >= new Date(originalBooking.checkIn) &&
     new Date(newBooking.checkOut) <= new Date(originalBooking.checkOut);
 
-  // Return the appropriate message based on the comparison
   if (isRoomValid && isDateValid) {
-    return "Only delete in Rooms is needed";
+    return { valid: true, originalRooms, newRooms };
   } else {
-    return "Need to do a new booking";
+    return { valid: false, originalRooms, newRooms };
   }
 }
+function calculateRoomsToDelete(originalRooms, newRooms) {
+  return {
+    singleRoomsToDelete: Math.max(
+      0,
+      originalRooms.singleRooms - newRooms.singleRooms
+    ),
+    doubleRoomsToDelete: Math.max(
+      0,
+      originalRooms.doubleRooms - newRooms.doubleRooms
+    ),
+    suitesToDelete: Math.max(0, originalRooms.suites - newRooms.suites),
+  };
+}
+async function deleteRoomsFromDb(roomsToDelete, BookingId) {
+  const deletePromises = [];
 
-// DynamoDB function to fetch booking by BookingId
-async function getBookingById(BookingId) {
+  // Deleting single rooms
+  for (let i = 1; i <= roomsToDelete.singleRoomsToDelete; i++) {
+    const roomId = i; // IDs 1-10 for single rooms
+    deletePromises.push(deleteRoom(roomId, BookingId));
+  }
+
+  // Deleting double rooms
+  for (let i = 11; i <= 11 + roomsToDelete.doubleRoomsToDelete - 1; i++) {
+    const roomId = i; // IDs 11-15 for double rooms
+    deletePromises.push(deleteRoom(roomId, BookingId));
+  }
+
+  // Deleting suites
+  for (let i = 16; i <= 16 + roomsToDelete.suitesToDelete - 1; i++) {
+    const roomId = i; // IDs 16-20 for suites
+    deletePromises.push(deleteRoom(roomId, BookingId));
+  }
+
+  await Promise.all(deletePromises);
+}
+async function deleteRoom(roomId, BookingId) {
   const params = {
-    TableName: "Bookings", // Name of the table in DynamoDB
-    Key: { BookingId }, // Primary key of the table (assuming bookingId is the primary key)
+    TableName: "Rooms",
+    Key: { roomId, BookingId }, // Adjust the key structure as needed
   };
 
   try {
-    // Perform a get operation using DynamoDBDocument client
-    const result = await db.get(params);
-
-    // If a booking is found, return the details
-    if (result.Item) {
-      return result.Item; // Return the booking item directly for further processing
-    } else {
-      // Return null if no booking is found
-      return null;
-    }
+    await db.delete(params).promise();
+    console.log(`Deleted room ${roomId} for booking ${BookingId}`);
   } catch (error) {
-    console.error("Error fetching booking:", error);
+    console.error("Error deleting room:", error);
+  }
+}
+async function getBookingById(BookingId) {
+  console.log("Fetching booking with ID:", BookingId);
+
+  const params = {
+    TableName: "Bookings",
+    Key: { BookingId }, // Ensure this is correctly formatted
+  };
+
+  try {
+    const result = await db.get(params).promise();
+    console.log("Params sent to DynamoDB:", params);
+    console.log("Booking fetched:", result.Item);
+
+    return result.Item || null;
+  } catch (error) {
+    console.error("Error fetching booking from DynamoDB:", error); // More specific log
     throw new Error("An error occurred while fetching the booking.");
   }
 }
 
-// Lambda handler
 exports.handler = async (event) => {
   try {
-    // Parse the incoming event body
     const {
       BookingId,
       guests,
@@ -113,54 +137,45 @@ exports.handler = async (event) => {
       checkOut,
     } = JSON.parse(event.body);
 
-    // Parse API room input (new booking)
-    const parsedApiRooms = parseApiRooms(roomsString);
+    BookingId = "test1234";
 
-    // Validate guest count per room
+    // Check if the number of guests is valid
+    const parsedApiRooms = parseApiRooms(roomsString);
     if (!isGuestCountValid(guests, parsedApiRooms)) {
       return {
         statusCode: 400,
         body: JSON.stringify({
-          error: "Too many guests for the selected rooms.",
+          error: "Guest count not valid",
         }),
       };
     }
 
-    // Retrieve original booking using bookingId from the "Bookings" table
+    // Get the original booking
     const originalBooking = await getBookingById(BookingId);
 
-    // Check if a booking was found
-    if (!originalBooking) {
+    if (originalBooking) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          message: "Booking found.",
+          booking: originalBooking,
+        }),
+      };
+    } else {
       return {
         statusCode: 404,
         body: JSON.stringify({
-          error: "Booking not found.",
+          error: "Booking NOT found.",
         }),
       };
     }
-
-    // Create new booking object to compare (using the new booking details)
-    const newBooking = {
-      rooms: roomsString,
-      checkIn,
-      checkOut,
-    };
-
-    // Compare original booking and new booking
-    const comparisonResult = compareBookings(originalBooking, newBooking);
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        message: comparisonResult,
-      }),
-    };
   } catch (error) {
-    console.error("Error in handler:", error);
+    console.error("Error in handler:", error); // Log the full error object
     return {
       statusCode: 500,
       body: JSON.stringify({
         error: "An internal error occurred.",
+        message: error.message, // Include the error message for debugging
       }),
     };
   }
