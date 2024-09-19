@@ -13,7 +13,7 @@
       "Properties": {
         "Code": {
           "S3Bucket": "serverless-framework-deployments-eu-north-1-a731b4f2-3e0d",
-          "S3Key": "serverless/bonzai/dev/1726658238806-2024-09-18T11:17:18.806Z/bonzai-allReservations.zip"
+          "S3Key": "serverless/bonzai/dev/1726745288906-2024-09-19T11:28:08.906Z/bonzai-allReservations.zip"
         },
         "Handler": "functions/Employee/allReservations/index.handler",
         "Runtime": "nodejs20.x",
@@ -31,14 +31,14 @@
         "AllReservationsLogGroup"
       ]
     },
-    "AllReservationsLambdaVersionIMEkKr1ESmDOKaMOf73BTyWawH5QDqAay6jPweKnKCY": {
+    "AllReservationsLambdaVersionDMfXwG9VeN0KAL2lloCX5BSDCvvwHsGuqc0vc2203Q": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "AllReservationsLambdaFunction"
         },
-        "CodeSha256": "3HYsoj/Kog3Wusl74RMdgv8kOrtmTy/G3B4z9M/Bh5Q="
+        "CodeSha256": "I7kvNMkakfwXgFxEDjyVihbPh/zdvgrCIH+8ERC3ae4="
       }
     },
     "HttpApi": {
@@ -115,13 +115,13 @@
         "TimeoutInMillis": 30000
       }
     },
-    "HttpApiRouteGetBonzaiEmpReservation": {
+    "HttpApiRouteGetBonzaiEmpReservationAll": {
       "Type": "AWS::ApiGatewayV2::Route",
       "Properties": {
         "ApiId": {
           "Ref": "HttpApi"
         },
-        "RouteKey": "GET /bonzai/emp/reservation",
+        "RouteKey": "GET /bonzai/emp/reservation/all",
         "Target": {
           "Fn::Join": [
             "/",
@@ -193,7 +193,7 @@
     "AllReservationsLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "AllReservationsLambdaVersionIMEkKr1ESmDOKaMOf73BTyWawH5QDqAay6jPweKnKCY"
+        "Ref": "AllReservationsLambdaVersionDMfXwG9VeN0KAL2lloCX5BSDCvvwHsGuqc0vc2203Q"
       },
       "Export": {
         "Name": "sls-bonzai-dev-AllReservationsLambdaFunctionQualifiedArn"
