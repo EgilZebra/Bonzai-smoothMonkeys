@@ -13,25 +13,14 @@ async function getBookingById(BookingId) {
 
     // If a booking is found, return the details
     if (result.Item) {
-      return {
-        statusCode: 200,
-        body: JSON.stringify(result.Item),
-      };
+      return result.Item; // Return the booking item directly for further processing
     } else {
       // Return 404 if no booking is found
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: "Booking not found." }),
-      };
+      return null;
     }
   } catch (error) {
     console.error("Error fetching booking:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        error: "An error occurred while fetching the booking.",
-      }),
-    };
+    throw new Error("An error occurred while fetching the booking.");
   }
 }
 
@@ -42,7 +31,7 @@ const MAX_SUITE_ROOM_CAPACITY = 3; // Suite can hold 3 guests
 
 // Function to check if the guest count is valid
 function isGuestCountValid(guests, rooms) {
-  const [singleRooms, doubleRooms, suites] = rooms;
+  const { singleRooms, doubleRooms, suites } = rooms;
 
   // Calculate the total maximum capacity
   const totalCapacity =
@@ -51,65 +40,94 @@ function isGuestCountValid(guests, rooms) {
     suites * MAX_SUITE_ROOM_CAPACITY;
 
   // Check if the number of guests exceeds total capacity
-  if (guests > totalCapacity) {
-    return false; // Guests exceed room capacity
-  }
-
-  return true; // Guests fit within the room capacity
+  return guests <= totalCapacity; // Return true if guests fit within the room capacity
 }
 
-function parseRooms(roomsString) {
-  // Convert the string "1,0,0" into an array of numbers [1, 0, 0]
-  return roomsString.split(",").map(Number);
+// Function to categorize rooms into single, double, and suites based on the room number
+function categorizeRooms(roomsString) {
+  const roomsArray = roomsString.split(",").map(Number); // Split the string into an array of numbers
+  let singleRooms = 0;
+  let doubleRooms = 0;
+  let suites = 0;
+
+  // Loop through each room number and categorize it
+  roomsArray.forEach((roomNumber) => {
+    if (roomNumber >= 1 && roomNumber <= 10) {
+      singleRooms++;
+    } else if (roomNumber >= 11 && roomNumber <= 15) {
+      doubleRooms++;
+    } else if (roomNumber >= 16 && roomNumber <= 20) {
+      suites++;
+    }
+  });
+
+  return {
+    singleRooms,
+    doubleRooms,
+    suites,
+  };
 }
 
 exports.handler = async (event) => {
-  // Parse the incoming event body
-  const {
-    BookingId,
-    guests,
-    rooms: roomsString,
-    checkIn,
-    checkOut,
-  } = JSON.parse(event.body);
+  try {
+    // Parse the incoming event body
+    const {
+      BookingId,
+      guests,
+      rooms: roomsString,
+      checkIn,
+      checkOut,
+    } = JSON.parse(event.body);
 
-  // Reformat rooms from string to array to be able to calc if number of guests compared to rooms is valid
-  const rooms = parseRooms(roomsString);
+    // Categorize rooms from the incoming roomsString
+    const categorizedRooms = categorizeRooms(roomsString);
 
-  // Validate guest count per room
-  if (!isGuestCountValid(guests, rooms)) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        error: "Too many guests for the selected rooms.",
-      }),
-    };
-  }
+    // Validate guest count per room
+    if (!isGuestCountValid(guests, categorizedRooms)) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: "Too many guests for the selected rooms.",
+        }),
+      };
+    }
 
-  // Retrieve original booking using bookingId from the "Bookings" table
-  const bookingResponse = await getBookingById(BookingId);
+    // Retrieve original booking using bookingId from the "Bookings" table
+    const booking = await getBookingById(BookingId);
 
-  //check if there is a Booking w the bookingRef
-  if (!bookingResponse) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        error: "Booking not found",
-      }),
-    };
-  } else {
-    // Kontrollera om bokning är samma eller mindre, då kan vi bara köra delete
-    // 1. omvandla rumsnummer till rumstyp, 1-10 => single, 11-15=> double, 16-20 => suite
-    // 2. jämföra varje rumstyp och dateRange, är allt samma eller mindre i ombokningen ska vi köra en delete av entries i Rooms
+    // Check if a booking was found
+    if (!booking) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({
+          error: "Booking not found.",
+        }),
+      };
+    }
+
+    // Extract rooms from the booking and categorize them
+    const originalRoomsString = booking.rooms;
+    const originalCategorizedRooms = categorizeRooms(originalRoomsString);
+
+    // For now, you can compare the original booking's categorized rooms with the new one if needed
+    // Here, you might add logic for further room comparison, validation, or changes.
+    // Example: comparing room types or handling updates based on the original booking.
+
     return {
       statusCode: 200,
       body: JSON.stringify({
-        bookingResponse,
+        booking,
+        originalCategorizedRooms,
+        newCategorizedRooms: categorizedRooms, // Newly categorized rooms for comparison
+      }),
+    };
+  } catch (error) {
+    console.error("Error in handler:", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: "An internal error occurred.",
       }),
     };
   }
-
-  //bryter ut alla nätter rum som är utöver orginal-bokningen
-  //kontrollera om de är ledia en efter en. ALLA lediga = boka med samma bokRef
-  //roomstyp + datum => loopa igenom
 };
