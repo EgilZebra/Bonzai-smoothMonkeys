@@ -23,6 +23,12 @@ functions:
       - httpApi:
           path: /bonzai/emp/reservation
           method: GET
+  makeReservation:
+    handler: functions/Guest/makeReservation/index.handler
+    events:
+      - httpApi:
+          path: "/bonzai/guest/boka"
+          method: POST
 
   # dateReservations:
   #   handler: functions/Employee/dateReservations/index.handler
@@ -42,12 +48,6 @@ functions:
   #     - httpApi:
   #         path: "/bonzai/guest/avboka"
   #         method: DELETE
-  #makeReservation:
-  #  handler: /functions/Guest/makeReservation/index.handler
-  #  events:
-  #    - httpApi:
-  #        path: "/bonazi/guest/boka"
-  #        method: POST
   # remakeReservation:
   #   handler: functions/Guest/remakeReservation/index.handler
   #   events:

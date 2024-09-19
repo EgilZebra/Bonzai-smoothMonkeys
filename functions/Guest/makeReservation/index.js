@@ -2,6 +2,7 @@ import { responseMaker } from "../../services/responseMaker"
 import { db } from "../../../data"
 const { v4: uuidv4 } = require('uuid')
 import { priceCalc } from "../../services/priceCalc";
+import { avalibleRooms } from "../../services/avalibleRooms"
 
 exports.handler = async (event) => {
     
@@ -11,9 +12,10 @@ exports.handler = async (event) => {
     const bookingID = uuidv4();
 
     try {
-        const bookedRooms = avalibleRooms( rooms, checkIn, checkOut, bookingID )
+        const bookedRooms = await avalibleRooms( rooms, checkIn, checkOut, bookingID )
         console.log(bookedRooms);
-        const totalprice = priceCalc( bookedRooms )
+
+        const totalprice = await priceCalc( bookedRooms )
         console.log(totalprice);
         const answer = await db.put({
             TableName: "Bookings",
@@ -28,8 +30,8 @@ exports.handler = async (event) => {
                 email: email
             }  
         })
-        return responseMaker(200, answer  )
+        return responseMaker(200, {rumsnummer: bookedRooms,  pris: totalprice, booked: answer } )
     } catch (error) {
-        return responseMaker( 500, )
+        return responseMaker( 500, {message: "noper"} )
     } 
 }
