@@ -23,21 +23,39 @@ function isGuestCountValid(guests, rooms) {
   return true; // Guests fit within the room capacity
 }
 
+function parseRooms(roomsString) {
+  // Convert the string "1,0,0" into an array of numbers [1, 0, 0]
+  return roomsString.split(",").map(Number);
+}
+
 exports.handler = async (event) => {
   // guets: string, rooms: [ number, number, number ], checkIn: Date, checkOut: Date, name: String, emil: String
-  const { bookingId, guests, rooms, checkIn, checkOut } = JSON.parse(
-    event.body
-  );
-  //rooms = "1,2,0"
+  const {
+    bookingId,
+    guests,
+    rooms: roomsString,
+    checkIn,
+    checkOut,
+  } = JSON.parse(event.body);
+
+  //reformat rooms from string to array to be able to calc if number of guests compared to rooms is valid.
+  const rooms = parseRooms(roomsString);
 
   // kontrollera att antalet gäster per rum ej är för mkt
+  // Check that the number of guests per room is not too many
   if (!isGuestCountValid(guests, rooms)) {
-    return responseMaker(400, {
-      error: "Too many guests for the selected rooms.",
-    });
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: "Too many guests for the selected rooms.",
+      }),
+    };
   } else {
     return {
-      message: "guest okay",
+      statusCode: 200,
+      body: JSON.stringify({
+        message: "Guest count is valid.",
+      }),
     };
   }
 
