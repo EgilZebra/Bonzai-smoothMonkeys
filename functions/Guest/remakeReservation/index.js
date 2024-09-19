@@ -1,6 +1,8 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
 require("dotenv").config();
+const client = new DynamoDBClient({});
+const dynamoDb = DynamoDBDocumentClient.from(client);
 
 function parseApiRooms(roomsString) {
   const [singleRooms, doubleRooms, suites] = roomsString.split(",").map(Number);
@@ -110,79 +112,56 @@ async function deleteRoom(roomId, BookingId) {
     console.error("Error deleting room:", error);
   }
 }
+async function connectAndFetchBooking(BookingId) {
+  const client = new DynamoDBClient({});
+  const dynamoDb = DynamoDBDocumentClient.from(client);
 
-const client = new DynamoDBClient({});
-const dynamoDb = DynamoDBDocumentClient.from(client);
+  const getParams = {
+    TableName: "Bookings",
+    Key: { BookingId },
+  };
+
+  try {
+    const originalBookingResult = await dynamoDb.send(
+      new GetCommand(getParams)
+    );
+    return originalBookingResult.Item; // Return the fetched booking
+  } catch (error) {
+    console.error("Error fetching booking:", error);
+    throw new Error("Database connection error.");
+  }
+}
 
 exports.handler = async (event) => {
   try {
-    const {
-      BookingId,
-      guests,
-      rooms: roomsString,
-      checkIn,
-      checkOut,
-    } = JSON.parse(event.body);
+    const { BookingId, guests, rooms: roomsString } = JSON.parse(event.body);
 
     // Validate guest count
     const parsedApiRooms = parseApiRooms(roomsString);
     if (!isGuestCountValid(guests, parsedApiRooms)) {
       return {
         statusCode: 400,
-        body: JSON.stringify({
-          error: "Guest count not valid",
-        }),
-      };
-    }
-
-    // Check if the database connection is up
-    // In practice, this is done by attempting a simple command (like Get or Scan)
-    try {
-      await dynamoDb.send(
-        new GetCommand({ TableName: "Bookings", Key: { BookingId } })
-      );
-    } catch (dbError) {
-      console.error("Database connection error:", dbError);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({
-          error: "Database connection error.",
-        }),
+        body: JSON.stringify({ error: "Guest count not valid" }),
       };
     }
 
     // Fetch the original booking info
-    const getParams = {
-      TableName: "Bookings",
-      Key: {
-        BookingId,
-      },
-    };
-
-    const originalBookingResult = await dynamoDb.send(
-      new GetCommand(getParams)
-    );
-    const originalBooking = originalBookingResult.Item;
-
-    if (!originalBookingResult.Item) {
+    const originalBooking = await connectAndFetchBooking(BookingId);
+    if (!originalBooking) {
       return {
         statusCode: 404,
         body: JSON.stringify({
           error: `No booking found with BookingId ${BookingId}.`,
         }),
       };
-    } else {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          originalBooking,
-        }),
-      };
     }
 
-    // Here you would continue with your validation logic...
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ originalBooking }),
+    };
 
-    // Proceed with the rest of your logic...
+    // Continue with your other logic...
   } catch (error) {
     console.error("Error in handler:", error);
     return {
@@ -194,5 +173,3 @@ exports.handler = async (event) => {
     };
   }
 };
-
-// Your existing functions: parseApiRooms, parseDbRooms, isGuestCountValid, etc.
