@@ -75,9 +75,9 @@ resources:
         TableName: ${env:TABLE_NAME_ROOMS}
         AttributeDefinitions:
           - AttributeName: roomId
-            AttributeType: "N"
+            AttributeType: "S"
           - AttributeName: date
-            AttributeType: "N"
+            AttributeType: "S"
         KeySchema:
           - AttributeName: roomId
             KeyType: HASH
