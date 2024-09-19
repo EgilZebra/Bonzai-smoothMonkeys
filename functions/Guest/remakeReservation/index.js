@@ -1,8 +1,4 @@
 // Import necessary modules
-import { responseMaker } from "../../services/responseMaker";
-import { db } from "../../../data";
-const { v4: uuidv4 } = require("uuid");
-import { priceCalc } from "../../services/priceCalc";
 
 // Define max capacity for each room type
 const MAX_SINGLE_ROOM_CAPACITY = 1; // Single room can hold 1 guest
