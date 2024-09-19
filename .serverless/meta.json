@@ -42,7 +42,7 @@
                     "Properties": {
                       "Code": {
                         "S3Bucket": "serverless-framework-deployments-eu-north-1-a731b4f2-3e0d",
-                        "S3Key": "serverless/bonzai/dev/1726747533911-2024-09-19T12:05:33.911Z/bonzai-allReservations.zip"
+                        "S3Key": "serverless/bonzai/dev/1726748914609-2024-09-19T12:28:34.609Z/bonzai-allReservations.zip"
                       },
                       "Handler": "functions/Employee/allReservations/index.handler",
                       "Runtime": "nodejs20.x",
@@ -65,7 +65,7 @@
                     "Properties": {
                       "Code": {
                         "S3Bucket": "serverless-framework-deployments-eu-north-1-a731b4f2-3e0d",
-                        "S3Key": "serverless/bonzai/dev/1726747533911-2024-09-19T12:05:33.911Z/bonzai-remakeReservation.zip"
+                        "S3Key": "serverless/bonzai/dev/1726748914609-2024-09-19T12:28:34.609Z/bonzai-remakeReservation.zip"
                       },
                       "Handler": "functions/Guest/remakeReservation/index.handler",
                       "Runtime": "nodejs20.x",
@@ -83,24 +83,24 @@
                       "RemakeReservationLogGroup"
                     ]
                   },
-                  "AllReservationsLambdaVersionWJUvRgxvmzmHjanf37GBIFffnH18d8Bywx8rIBKlzWk": {
+                  "AllReservationsLambdaVersionycQxcW0wkCDiLs9EgMQF8EcANmm7cKX1nvKyRpUWs": {
                     "Type": "AWS::Lambda::Version",
                     "DeletionPolicy": "Retain",
                     "Properties": {
                       "FunctionName": {
                         "Ref": "AllReservationsLambdaFunction"
                       },
-                      "CodeSha256": "j8jmACyDD8SOjo3O1REM7CzUSURZnRJdbNNl3VbuT3s="
+                      "CodeSha256": "lIFDD0jKPBz6UbQgwHmYoBVBEyWKuCYidYmq0S+ExBM="
                     }
                   },
-                  "RemakeReservationLambdaVersionPw9cBnsBYy9hpl1ouaLLha9b6xetsO6NaZ9qzwDIfAE": {
+                  "RemakeReservationLambdaVersionXM9i1vFhBM2eteUfJ0j1NZ7kF5p7bxLP4ifHtVgNAV8": {
                     "Type": "AWS::Lambda::Version",
                     "DeletionPolicy": "Retain",
                     "Properties": {
                       "FunctionName": {
                         "Ref": "RemakeReservationLambdaFunction"
                       },
-                      "CodeSha256": "NpnNlHmjj4U68ZkKjzI4oFPhn8s6vjYOZ5yYRl9PVT4="
+                      "CodeSha256": "2QGIAlpi0ChcxUVIEwbaB8Uc+axhO6qqqJ3qfJXRkJM="
                     }
                   },
                   "HttpApi": {
@@ -330,7 +330,7 @@
                   "AllReservationsLambdaFunctionQualifiedArn": {
                     "Description": "Current Lambda function version",
                     "Value": {
-                      "Ref": "AllReservationsLambdaVersionWJUvRgxvmzmHjanf37GBIFffnH18d8Bywx8rIBKlzWk"
+                      "Ref": "AllReservationsLambdaVersionycQxcW0wkCDiLs9EgMQF8EcANmm7cKX1nvKyRpUWs"
                     },
                     "Export": {
                       "Name": "sls-bonzai-dev-AllReservationsLambdaFunctionQualifiedArn"
@@ -339,7 +339,7 @@
                   "RemakeReservationLambdaFunctionQualifiedArn": {
                     "Description": "Current Lambda function version",
                     "Value": {
-                      "Ref": "RemakeReservationLambdaVersionPw9cBnsBYy9hpl1ouaLLha9b6xetsO6NaZ9qzwDIfAE"
+                      "Ref": "RemakeReservationLambdaVersionXM9i1vFhBM2eteUfJ0j1NZ7kF5p7bxLP4ifHtVgNAV8"
                     },
                     "Export": {
                       "Name": "sls-bonzai-dev-RemakeReservationLambdaFunctionQualifiedArn"
@@ -392,7 +392,7 @@
               "individually": true,
               "artifactsS3KeyDirname": "serverless/bonzai/dev/code-artifacts",
               "deploymentBucket": "serverless-framework-deployments-eu-north-1-a731b4f2-3e0d",
-              "artifactDirectoryName": "serverless/bonzai/dev/1726747533911-2024-09-19T12:05:33.911Z"
+              "artifactDirectoryName": "serverless/bonzai/dev/1726748914609-2024-09-19T12:28:34.609Z"
             },
             "functions": {
               "allReservations": {
@@ -418,7 +418,7 @@
                 "timeout": 6,
                 "runtime": "nodejs20.x",
                 "vpc": {},
-                "versionLogicalId": "AllReservationsLambdaVersionWJUvRgxvmzmHjanf37GBIFffnH18d8Bywx8rIBKlzWk"
+                "versionLogicalId": "AllReservationsLambdaVersionycQxcW0wkCDiLs9EgMQF8EcANmm7cKX1nvKyRpUWs"
               },
               "remakeReservation": {
                 "handler": "functions/Guest/remakeReservation/index.handler",
@@ -443,7 +443,7 @@
                 "timeout": 6,
                 "runtime": "nodejs20.x",
                 "vpc": {},
-                "versionLogicalId": "RemakeReservationLambdaVersionPw9cBnsBYy9hpl1ouaLLha9b6xetsO6NaZ9qzwDIfAE"
+                "versionLogicalId": "RemakeReservationLambdaVersionXM9i1vFhBM2eteUfJ0j1NZ7kF5p7bxLP4ifHtVgNAV8"
               }
             },
             "resources": {
@@ -551,7 +551,7 @@
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-eu-north-1-a731b4f2-3e0d",
-                  "S3Key": "serverless/bonzai/dev/1726747533911-2024-09-19T12:05:33.911Z/bonzai-allReservations.zip"
+                  "S3Key": "serverless/bonzai/dev/1726748914609-2024-09-19T12:28:34.609Z/bonzai-allReservations.zip"
                 },
                 "Handler": "functions/Employee/allReservations/index.handler",
                 "Runtime": "nodejs20.x",
@@ -574,7 +574,7 @@
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-eu-north-1-a731b4f2-3e0d",
-                  "S3Key": "serverless/bonzai/dev/1726747533911-2024-09-19T12:05:33.911Z/bonzai-remakeReservation.zip"
+                  "S3Key": "serverless/bonzai/dev/1726748914609-2024-09-19T12:28:34.609Z/bonzai-remakeReservation.zip"
                 },
                 "Handler": "functions/Guest/remakeReservation/index.handler",
                 "Runtime": "nodejs20.x",
@@ -592,24 +592,24 @@
                 "RemakeReservationLogGroup"
               ]
             },
-            "AllReservationsLambdaVersionWJUvRgxvmzmHjanf37GBIFffnH18d8Bywx8rIBKlzWk": {
+            "AllReservationsLambdaVersionycQxcW0wkCDiLs9EgMQF8EcANmm7cKX1nvKyRpUWs": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "AllReservationsLambdaFunction"
                 },
-                "CodeSha256": "j8jmACyDD8SOjo3O1REM7CzUSURZnRJdbNNl3VbuT3s="
+                "CodeSha256": "lIFDD0jKPBz6UbQgwHmYoBVBEyWKuCYidYmq0S+ExBM="
               }
             },
-            "RemakeReservationLambdaVersionPw9cBnsBYy9hpl1ouaLLha9b6xetsO6NaZ9qzwDIfAE": {
+            "RemakeReservationLambdaVersionXM9i1vFhBM2eteUfJ0j1NZ7kF5p7bxLP4ifHtVgNAV8": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "RemakeReservationLambdaFunction"
                 },
-                "CodeSha256": "NpnNlHmjj4U68ZkKjzI4oFPhn8s6vjYOZ5yYRl9PVT4="
+                "CodeSha256": "2QGIAlpi0ChcxUVIEwbaB8Uc+axhO6qqqJ3qfJXRkJM="
               }
             },
             "HttpApi": {
@@ -839,7 +839,7 @@
             "AllReservationsLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "AllReservationsLambdaVersionWJUvRgxvmzmHjanf37GBIFffnH18d8Bywx8rIBKlzWk"
+                "Ref": "AllReservationsLambdaVersionycQxcW0wkCDiLs9EgMQF8EcANmm7cKX1nvKyRpUWs"
               },
               "Export": {
                 "Name": "sls-bonzai-dev-AllReservationsLambdaFunctionQualifiedArn"
@@ -848,7 +848,7 @@
             "RemakeReservationLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "RemakeReservationLambdaVersionPw9cBnsBYy9hpl1ouaLLha9b6xetsO6NaZ9qzwDIfAE"
+                "Ref": "RemakeReservationLambdaVersionXM9i1vFhBM2eteUfJ0j1NZ7kF5p7bxLP4ifHtVgNAV8"
               },
               "Export": {
                 "Name": "sls-bonzai-dev-RemakeReservationLambdaFunctionQualifiedArn"
@@ -901,7 +901,7 @@
         "individually": true,
         "artifactsS3KeyDirname": "serverless/bonzai/dev/code-artifacts",
         "deploymentBucket": "serverless-framework-deployments-eu-north-1-a731b4f2-3e0d",
-        "artifactDirectoryName": "serverless/bonzai/dev/1726747533911-2024-09-19T12:05:33.911Z"
+        "artifactDirectoryName": "serverless/bonzai/dev/1726748914609-2024-09-19T12:28:34.609Z"
       },
       "functions": {
         "allReservations": {
@@ -927,7 +927,7 @@
           "timeout": 6,
           "runtime": "nodejs20.x",
           "vpc": {},
-          "versionLogicalId": "AllReservationsLambdaVersionWJUvRgxvmzmHjanf37GBIFffnH18d8Bywx8rIBKlzWk"
+          "versionLogicalId": "AllReservationsLambdaVersionycQxcW0wkCDiLs9EgMQF8EcANmm7cKX1nvKyRpUWs"
         },
         "remakeReservation": {
           "handler": "functions/Guest/remakeReservation/index.handler",
@@ -952,7 +952,7 @@
           "timeout": 6,
           "runtime": "nodejs20.x",
           "vpc": {},
-          "versionLogicalId": "RemakeReservationLambdaVersionPw9cBnsBYy9hpl1ouaLLha9b6xetsO6NaZ9qzwDIfAE"
+          "versionLogicalId": "RemakeReservationLambdaVersionXM9i1vFhBM2eteUfJ0j1NZ7kF5p7bxLP4ifHtVgNAV8"
         }
       },
       "resources": {
@@ -1043,18 +1043,18 @@
     "serviceUniqueId": "arn:aws:cloudformation:eu-north-1:676206943781:stack/bonzai-dev/42d8faa0-757e-11ef-8532-06c96ee6294b",
     "serviceProviderAwsCfStackId": "arn:aws:cloudformation:eu-north-1:676206943781:stack/bonzai-dev/42d8faa0-757e-11ef-8532-06c96ee6294b",
     "serviceProviderAwsCfStackCreated": "2024-09-18T05:24:22.077Z",
-    "serviceProviderAwsCfStackUpdated": "2024-09-19T12:05:29.812Z",
+    "serviceProviderAwsCfStackUpdated": "2024-09-19T12:28:30.631Z",
     "serviceProviderAwsCfStackStatus": "UPDATE_COMPLETE",
     "serviceProviderAwsCfStackOutputs": [
       {
         "OutputKey": "RemakeReservationLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:eu-north-1:676206943781:function:bonzai-dev-remakeReservation:3",
+        "OutputValue": "arn:aws:lambda:eu-north-1:676206943781:function:bonzai-dev-remakeReservation:5",
         "Description": "Current Lambda function version",
         "ExportName": "sls-bonzai-dev-RemakeReservationLambdaFunctionQualifiedArn"
       },
       {
         "OutputKey": "AllReservationsLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:eu-north-1:676206943781:function:bonzai-dev-allReservations:74",
+        "OutputValue": "arn:aws:lambda:eu-north-1:676206943781:function:bonzai-dev-allReservations:76",
         "Description": "Current Lambda function version",
         "ExportName": "sls-bonzai-dev-AllReservationsLambdaFunctionQualifiedArn"
       },

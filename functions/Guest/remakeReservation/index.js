@@ -1,4 +1,39 @@
 // Import necessary modules
+const { db } = require("../../../data/index.js"); // Assuming 'db-file' is where you define the DynamoDB connection.
+
+async function getBookingById(BookingId) {
+  const params = {
+    TableName: "Bookings", // Name of the table in DynamoDB
+    Key: { BookingId }, // Primary key of the table (assuming bookingId is the primary key)
+  };
+
+  try {
+    // Perform a get operation using DynamoDBDocument client
+    const result = await db.get(params);
+
+    // If a booking is found, return the details
+    if (result.Item) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify(result.Item),
+      };
+    } else {
+      // Return 404 if no booking is found
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: "Booking not found." }),
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching booking:", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: "An error occurred while fetching the booking.",
+      }),
+    };
+  }
+}
 
 // Define max capacity for each room type
 const MAX_SINGLE_ROOM_CAPACITY = 1; // Single room can hold 1 guest
@@ -29,20 +64,19 @@ function parseRooms(roomsString) {
 }
 
 exports.handler = async (event) => {
-  // guets: string, rooms: [ number, number, number ], checkIn: Date, checkOut: Date, name: String, emil: String
+  // Parse the incoming event body
   const {
-    bookingId,
+    BookingId,
     guests,
     rooms: roomsString,
     checkIn,
     checkOut,
   } = JSON.parse(event.body);
 
-  //reformat rooms from string to array to be able to calc if number of guests compared to rooms is valid.
+  // Reformat rooms from string to array to be able to calc if number of guests compared to rooms is valid
   const rooms = parseRooms(roomsString);
 
-  // kontrollera att antalet gäster per rum ej är för mkt
-  // Check that the number of guests per room is not too many
+  // Validate guest count per room
   if (!isGuestCountValid(guests, rooms)) {
     return {
       statusCode: 400,
@@ -50,23 +84,17 @@ exports.handler = async (event) => {
         error: "Too many guests for the selected rooms.",
       }),
     };
-  } else {
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        message: "Guest count is valid.",
-      }),
-    };
   }
 
-  // hämta orginal-bokningen med hjälp av bookingId i table Bookings
+  // Retrieve original booking using bookingId from the "Bookings" table
+  const bookingResponse = await getBookingById(BookingId);
 
+  // Return the booking details or an error message (if booking is not found)
+  return bookingResponse;
+
+  // hämta orginal-bokningen med hjälp av bookingId i table Bookings
   // ändra till mindre nätter, antal rum etc. => DELETE.
 
   //bryter ut alla nätter rum som är utöver orginal-bokningen
   //roomstyp + datum => loopa igenom
 };
-//Planera
-//Antal gäster
-//Vilka rumstyper och antal
-//Datum för in-och utcheckning
