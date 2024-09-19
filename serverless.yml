@@ -24,6 +24,13 @@ functions:
           path: /bonzai/emp/reservation
           method: GET
 
+  remakeReservation:
+    handler: functions/Guest/remakeReservation/index.handler
+    events:
+      - httpApi:
+          path: /bonzai/guest/omboka
+          method: PUT
+
   # dateReservations:
   #   handler: functions/Employee/dateReservations/index.handler
   #   events:
@@ -48,12 +55,6 @@ functions:
   #    - httpApi:
   #        path: "/bonazi/guest/boka"
   #        method: POST
-  # remakeReservation:
-  #   handler: functions/Guest/remakeReservation/index.handler
-  #   events:
-  #     - httpApi:
-  #         path: "/bonzai/guest/omboka"
-  #         method: PUT
 
 resources:
   Resources:
