@@ -59,11 +59,10 @@ function compareBookings(originalBooking, newBooking) {
   const originalRooms = parseDbRooms(originalBooking.rooms); // Room IDs from DB
   const newRooms = parseApiRooms(newBooking.rooms); // Room counts from API
 
-  // Compare room counts (new booking should have less or equal rooms)
   const isRoomValid =
     newRooms.singleRooms <= originalRooms.singleRooms &&
     newRooms.doubleRooms <= originalRooms.doubleRooms &&
-    newRooms.suites <= originalRooms.suites;
+    newRooms.suites <= originalRooms.suites; // Missing the "suites" count comparison
 
   // Compare check-in and check-out dates (new booking dates should be the same or shorter)
   const isDateValid =
