@@ -1,20 +1,29 @@
-const getDates = async ( startDate, endDate ) => {
+  
 
+  const getDates = async (checkIn, checkOut) => {
+
+    const startDate = new Date(checkIn);
+    console.log({startDate: startDate});
+    const stopDate = new Date(checkOut);
+    console.log({stopDate: stopDate});
+    
     Date.prototype.addDays = function(days) {
         var date = new Date(this.valueOf());
         date.setDate(date.getDate() + days);
         return date;
     }
-    
-    function getDates(startDate, stopDate) {
-        var dateArray = new Array();
-        var currentDate = startDate;
-        while (currentDate <= stopDate) {
-            dateArray.push(new Date (currentDate));
-            currentDate = currentDate.addDays(1);
-        }
-        return dateArray;
+
+    let dateArray = new Array();
+    let currentDate = startDate;
+    while (currentDate <= stopDate) {
+        const newDate = new Date (currentDate);
+        const dateString = newDate.toISOString();
+        dateArray.push( dateString.slice(0, 10) );
+        currentDate = currentDate.addDays(1);
     }
-    
+    console.log(dateArray);
+    return dateArray;
 }
+    
+
 module.exports = { getDates };
