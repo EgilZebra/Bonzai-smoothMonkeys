@@ -5,8 +5,6 @@ const checkParams = async ( name, email, guests, rooms, checkIn, checkOut ) => {
     let guestsCalc;
     let roomCalc;
 
-    // try {
-
         if ( typeof name === 'string' 
           && typeof email === "string"
           && typeof guests === 'string'
@@ -39,18 +37,10 @@ const checkParams = async ( name, email, guests, rooms, checkIn, checkOut ) => {
         } else {
             return "Those dates are in the wrong format!"
         }
-         
-
-
 
         if ( allstrings && dateOK && guestsCalc && roomCalc ) {
             return true
         }
-        
-    // } catch (error) {
-    //     console.error("error checking params:", error);
-    //     return "Failed to check the parameters, did you sent the right information?"
-    // }
 }
 
 module.exports = { checkParams }
