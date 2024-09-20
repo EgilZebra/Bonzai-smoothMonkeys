@@ -5,6 +5,8 @@ import {
   GetCommand,
   DeleteCommand,
 } from "@aws-sdk/lib-dynamodb";
+import { getDates } from "../../services/getDates";
+import { responseMaker } from "../../services/responseMaker";
 require("dotenv").config();
 
 const client = new DynamoDBClient({});
@@ -41,6 +43,15 @@ exports.handler = async (event) => {
       };
     }
 
+    const today = new Date();
+    const todayString = today.toISOString();
+    const todaySimple = todayString.slice(0, 10)
+    const firstDay = result.Item.startDate;
+    const datesDelta = await getDates( todaySimple, firstDay )
+    if ( datesDelta.length <= 2) {
+      return responseMaker( 200, { message: "Unable to cancel reservations so late!" });
+    }
+    
     const scanParams = {
       TableName: "Rooms",
       FilterExpression: "bookingId = :bookingId",
