@@ -1,5 +1,5 @@
 const priceCalc = async ( rooms ) => {
-    console.log(rooms.length, typeof rooms)
+
     try {
         let total = 0
         for ( i = 0 ; i < rooms.length ; i++ ) {
@@ -10,7 +10,6 @@ const priceCalc = async ( rooms ) => {
             } else if ( rooms[i] > 15 ) {
                 total = total + 1500
             }
-            console.log(total);
         }
         return total 
     } catch (error) {

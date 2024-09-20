@@ -1,42 +1,50 @@
-const { db } = require("../../data");
-import { bookThisRoom } from "./bookThisRoom";
-import { getDates } from "./getDates";
 import { sigleRoomIDs, doubleRoomsIDs, suiteRoomsIDs  } from "./checkRooms";
 
+const avalibleRooms = async ( rooms, checkIn, checkOut) => {
 
-const avalibleRooms = async ( rooms, checkIn, checkOut, bookingID ) => {
-    console.log( rooms, checkIn, checkOut, bookingID )
     try {
-
         const roomsArr = JSON.parse(rooms)
 
-        console.log( typeof enkel )
-        
-        let avalibleSingleRooms = await sigleRoomIDs( roomsArr[0], checkIn, checkOut )
 
-        let avalibleDoubleRooms = await doubleRoomsIDs( roomsArr[1], checkIn, checkOut )
+        let allAvalibleRooms = []
+        let avalibleSingleRooms;
+        let avalibleDoubleRooms; 
+        let avalibleSuiteRooms;
         
-        let avalibleSuiteRooms  = await suiteRoomsIDs( roomsArr[2], checkIn, checkOut )
+        if ( roomsArr[0] > 0 ) { 
+            avalibleSingleRooms = await sigleRoomIDs( roomsArr[0], checkIn, checkOut ) 
+            if ( avalibleSingleRooms === false ) {
+                return "no avalible singel-rooms "
+            } else {
+                allAvalibleRooms = allAvalibleRooms.concat(avalibleSingleRooms)
+            }
+        };
+        console.log({avalibleSingleRooms: avalibleSingleRooms});     
         
-
-        const allAvalibleRooms = avalibleSingleRooms.concat(avalibleDoubleRooms, avalibleSuiteRooms);
-        const allDates = getDates(checkIn, checkOut)
-        console.log(allDates);
-
-        // const roombooking = [];
-        // for (let roomID of allAvalibleRooms ) {
-        //     for ( let date of allDates ) {
-        //         const promise = bookThisRoom( roomID, date, bookingID )
-        //         roombooking.push(promise)
-        //     }
-        // }
-        // await Promise.all(roombooking)
+        if ( roomsArr[1] > 0 ) { 
+            avalibleDoubleRooms = await doubleRoomsIDs( roomsArr[1], checkIn, checkOut )
+            if ( avalibleDoubleRooms === false ) { 
+            return " no avalible double-rooms "
+            } else {
+                allAvalibleRooms = allAvalibleRooms.concat(avalibleDoubleRooms);
+            }
+        };
+        console.log({avalibleDoubleRooms: avalibleDoubleRooms});
+       
+        if ( roomsArr[2] > 0 ) { 
+            avalibleSuiteRooms  = await suiteRoomsIDs( roomsArr[2], checkIn, checkOut ) 
+            if ( avalibleSuiteRooms === false ) {
+                return " no avalible suites "
+            } else {
+                allAvalibleRooms = allAvalibleRooms.concat(avalibleSuiteRooms);
+            }
+        };
+        console.log({avalibleSuiteRooms: avalibleSuiteRooms})
 
         return allAvalibleRooms;
     } catch (error) {
         return "No rooms avalible those dates, sorry!";
-    }
-    
+    } 
 };
 
 module.exports = { avalibleRooms };

@@ -3,6 +3,9 @@ import { db } from "../../../data"
 const { v4: uuidv4 } = require('uuid')
 import { priceCalc } from "../../services/priceCalc";
 import { avalibleRooms } from "../../services/avalibleRooms"
+import { getDates } from "../../services/getDates";
+import { bookThisRoom } from "../../services/bookThisRoom";
+import { checkParams } from "../../services/checkParams";
 
 exports.handler = async (event) => {
     
@@ -12,11 +15,25 @@ exports.handler = async (event) => {
     const bookingID = uuidv4();
 
     try {
-        const bookedRooms = await avalibleRooms( rooms, checkIn, checkOut, bookingID )
-        console.log(bookedRooms);
+        const newParams = await checkParams( name, email, guests, rooms, checkIn, checkOut );
+        if ( newParams !== true ) {
+            return responseMaker( 400, newParams )
+        }
+            
+        const bookedRooms = await avalibleRooms( rooms, checkIn, checkOut )
+        console.log({bookedrooms: bookedRooms});
+        
+        if ( typeof bookedRooms === 'string' ) {
+            return responseMaker ( 400, bookedRooms )
+        }
 
         const totalprice = await priceCalc( bookedRooms )
-        console.log(totalprice);
+        console.log({totalprice: totalprice });
+
+        const allDates = await getDates(checkIn, checkOut)
+        console.log({allDates: allDates});
+        const roombooking = await bookThisRoom( bookedRooms, allDates, bookingID )
+
         const answer = await db.put({
             TableName: "Bookings",
             Item: {
@@ -30,8 +47,9 @@ exports.handler = async (event) => {
                 email: email
             }  
         })
-        return responseMaker(200, {rumsnummer: bookedRooms,  pris: totalprice, booked: answer } )
+        console.log(answer);
+        return responseMaker(200, {rumsnummer: bookedRooms,  pris: totalprice, booked: answer , roomsbooked: roombooking} )
     } catch (error) {
-        return responseMaker( 500, {message: "noper"} )
+        return responseMaker( 500, {message: "Sorry, the sytem does not seem to work properly!"} )
     } 
 }
