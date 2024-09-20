@@ -1,5 +1,10 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  ScanCommand,
+  QueryCommand,
+} from "@aws-sdk/lib-dynamodb";
 require("dotenv").config();
 const client = new DynamoDBClient({});
 const dynamoDb = DynamoDBDocumentClient.from(client);
@@ -192,6 +197,63 @@ function compareBookingsDayByDay(originalBooking, newBooking) {
     return results;
   }
 }
+async function fetchDateBooking(date) {
+  const client = new DynamoDBClient({});
+  const dynamoDb = DynamoDBDocumentClient.from(client);
+
+  console.log("Fetching bookings for date:", date);
+
+  const getParams = {
+    TableName: "Rooms",
+    FilterExpression: "#d = :date",
+    ExpressionAttributeNames: {
+      "#d": "date", // Use a placeholder for the reserved keyword
+    },
+    ExpressionAttributeValues: {
+      ":date": date,
+    },
+  };
+
+  try {
+    const result = await dynamoDb.send(new ScanCommand(getParams));
+    console.log("Scan Result:", JSON.stringify(result, null, 2));
+    const bookings = result.Items || [];
+
+    // Initialize room counts
+    let singleRoomsBooked = 0;
+    let doubleRoomsBooked = 0;
+    let suitesBooked = 0;
+
+    // Calculate booked rooms
+    bookings.forEach((booking) => {
+      const roomId = booking.roomId;
+      if (roomId >= 1 && roomId <= 10) {
+        singleRoomsBooked++;
+      } else if (roomId >= 11 && roomId <= 15) {
+        doubleRoomsBooked++;
+      } else if (roomId >= 16 && roomId <= 20) {
+        suitesBooked++;
+      }
+    });
+
+    // Total capacity for each room type
+    const totalSingleRooms = 10; // IDs 1-10
+    const totalDoubleRooms = 5; // IDs 11-15
+    const totalSuites = 5; // IDs 16-20
+
+    // Calculate available rooms
+    const availableSingleRooms = totalSingleRooms - singleRoomsBooked;
+    const availableDoubleRooms = totalDoubleRooms - doubleRoomsBooked;
+    const availableSuites = totalSuites - suitesBooked;
+
+    // Format the result as rooms("availableSingle,availableDouble,availableSuites")
+    const roomStatus = `${availableSingleRooms},${availableDoubleRooms},${availableSuites}`;
+    return roomStatus;
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+    throw new Error("Database connection error: " + error.message);
+  }
+}
 
 exports.handler = async (event) => {
   try {
@@ -244,7 +306,7 @@ exports.handler = async (event) => {
       convertedBooking,
       newBooking
     );
-    if (comparisonResults.error) {
+    /**   if (comparisonResults.error) {
       return {
         statusCode: 404,
         body: JSON.stringify({ message: "No changes in new booking" }),
@@ -255,6 +317,17 @@ exports.handler = async (event) => {
         body: JSON.stringify({ changes: comparisonResults }),
       };
     }
+       */
+
+    // fetch freeRooms rooms("1,2,3 ") for a specific date
+    const date = "2024-01-02";
+    bookingsDate = await fetchDateBooking(date);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ roomStatus: bookingsDate }),
+    };
+
     /** 
     return {
       statusCode: 200,
