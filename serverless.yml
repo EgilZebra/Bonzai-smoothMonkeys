@@ -23,6 +23,14 @@ functions:
       - httpApi:
           path: /bonzai/emp/reservation
           method: GET
+
+  cancelReservation:
+    handler: functions/Guest/cancelReservation/index.handler
+    events:
+      - httpApi:
+          path: /bonzai/guest/avboka
+          method: DELETE
+
   makeReservation:
     handler: functions/Guest/makeReservation/index.handler
     events:
