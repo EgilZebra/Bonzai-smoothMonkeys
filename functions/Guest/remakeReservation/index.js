@@ -131,10 +131,95 @@ async function connectAndFetchBooking(BookingId) {
     throw new Error("Database connection error.");
   }
 }
+function compareBookingsDayByDay(originalBooking, newBooking) {
+  const results = [];
+
+  // Helper function to generate an array of dates between checkIn and checkOut, excluding checkOut
+  function getDatesArray(startDate, endDate) {
+    const dates = [];
+    let currentDate = new Date(startDate);
+
+    // Loop until the day before checkOut
+    while (currentDate < new Date(endDate)) {
+      dates.push(new Date(currentDate).toISOString().split("T")[0]); // Format as YYYY-MM-DD
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return dates;
+  }
+
+  // Get date ranges for both bookings, excluding the checkOut date
+  const originalBookingDates = getDatesArray(
+    originalBooking.checkIn,
+    originalBooking.checkOut
+  );
+  const newBookingDates = getDatesArray(
+    newBooking.checkIn,
+    newBooking.checkOut
+  );
+
+  // Find the union of the two date ranges (to compare both date ranges)
+  const allDates = new Set([...originalBookingDates, ...newBookingDates]);
+
+  // Split room strings into arrays for easy comparison
+  const originalRoomsArray = originalBooking.rooms.split(",").map(Number);
+  const newRoomsArray = newBooking.rooms.split(",").map(Number);
+
+  // Iterate through each date and compare rooms
+  allDates.forEach((date) => {
+    const originalHasDate = originalBookingDates.includes(date);
+    const newHasDate = newBookingDates.includes(date);
+
+    if (!originalHasDate || !newHasDate) {
+      // If a date exists only in one booking
+      results.push({
+        date,
+        status: "Booking date missing in one of the bookings",
+        originalRooms: originalHasDate ? originalBooking.rooms : "N/A",
+        newRooms: newHasDate ? newBooking.rooms : "N/A",
+      });
+    } else {
+      // Compare rooms for the date (same room setup across the range for both bookings)
+      if (
+        originalRoomsArray[0] !== newRoomsArray[0] ||
+        originalRoomsArray[1] !== newRoomsArray[1] ||
+        originalRoomsArray[2] !== newRoomsArray[2]
+      ) {
+        results.push({
+          date,
+          status: "Room configuration differs",
+          originalRooms: originalBooking.rooms,
+          newRooms: newBooking.rooms,
+        });
+      }
+    }
+  });
+
+  // Return an error message if no differences are found, otherwise return the comparison results
+  if (results.length === 0) {
+    return { error: "No differences found between the bookings." };
+  } else {
+    return results;
+  }
+}
 
 exports.handler = async (event) => {
   try {
-    const { BookingId, guests, rooms: roomsString } = JSON.parse(event.body);
+    const {
+      BookingId,
+      guests,
+      rooms: roomsString,
+      checkIn,
+      checkOut,
+    } = JSON.parse(event.body);
+
+    const newBooking = {
+      BookingId,
+      guests,
+      rooms: roomsString,
+      checkIn,
+      checkOut,
+    };
 
     // Validate guest count
     const parsedApiRooms = parseApiRooms(roomsString);
@@ -164,10 +249,33 @@ exports.handler = async (event) => {
       rooms: convertedRoomsString,
     };
 
+    //compare originalBooking and newBooking
+    const comparisonResults = compareBookingsDayByDay(
+      convertedBooking,
+      newBooking
+    );
+    if (comparisonResults.error) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ message: "No changes in new booking" }),
+      };
+    } else {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ changes: comparisonResults }),
+      };
+    }
+    /** 
     return {
       statusCode: 200,
       body: JSON.stringify({ originalBookingConverted: convertedBooking }),
     };
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ changes: comparisonResults }),
+    };
+    */
   } catch (error) {
     console.error("Error in handler:", error);
     return {
