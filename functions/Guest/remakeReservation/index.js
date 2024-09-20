@@ -139,7 +139,6 @@ function compareBookingsDayByDay(originalBooking, newBooking) {
     const dates = [];
     let currentDate = new Date(startDate);
 
-    // Loop until the day before checkOut
     while (currentDate < new Date(endDate)) {
       dates.push(new Date(currentDate).toISOString().split("T")[0]); // Format as YYYY-MM-DD
       currentDate.setDate(currentDate.getDate() + 1);
@@ -165,37 +164,28 @@ function compareBookingsDayByDay(originalBooking, newBooking) {
   const originalRoomsArray = originalBooking.rooms.split(",").map(Number);
   const newRoomsArray = newBooking.rooms.split(",").map(Number);
 
-  // Iterate through each date and compare rooms
+  // Iterate through each date and calculate the room differences
   allDates.forEach((date) => {
     const originalHasDate = originalBookingDates.includes(date);
     const newHasDate = newBookingDates.includes(date);
 
-    if (!originalHasDate || !newHasDate) {
-      // If a date exists only in one booking
+    if (originalHasDate && newHasDate) {
+      // Calculate differences in room counts
+      const roomDifferences = originalRoomsArray.map(
+        (roomCount, index) => newRoomsArray[index] - roomCount
+      );
+
       results.push({
         date,
-        status: "Booking date missing in one of the bookings",
-        originalRooms: originalHasDate ? originalBooking.rooms : "N/A",
-        newRooms: newHasDate ? newBooking.rooms : "N/A",
+        rooms: roomDifferences.join(","),
       });
     } else {
-      // Compare rooms for the date (same room setup across the range for both bookings)
-      if (
-        originalRoomsArray[0] !== newRoomsArray[0] ||
-        originalRoomsArray[1] !== newRoomsArray[1] ||
-        originalRoomsArray[2] !== newRoomsArray[2]
-      ) {
-        results.push({
-          date,
-          status: "Room configuration differs",
-          originalRooms: originalBooking.rooms,
-          newRooms: newBooking.rooms,
-        });
-      }
+      // If one of the bookings doesn't include this date, you can choose how to handle it.
+      // For now, we will just ignore it, but you could log a difference if needed.
     }
   });
 
-  // Return an error message if no differences are found, otherwise return the comparison results
+  // If no results were found, return an appropriate message
   if (results.length === 0) {
     return { error: "No differences found between the bookings." };
   } else {
