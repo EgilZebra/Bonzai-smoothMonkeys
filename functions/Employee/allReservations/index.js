@@ -12,7 +12,7 @@ exports.handler = async (event) => {
     const books = await db.scan(
       bookings
     );
-    return responseMaker(200, books.Items);
+    return responseMaker(200, { bookings: books.Items });
   } catch (error) {
     return responseMaker(500, { message: "Error finding bookings" });
   }

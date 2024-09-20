@@ -48,7 +48,7 @@ exports.handler = async (event) => {
             }  
         })
         console.log(answer);
-        return responseMaker(200, {rumsnummer: bookedRooms,  pris: totalprice, booked: answer , roomsbooked: roombooking} )
+        return responseMaker(200, { message: `Dear ${name} Your booking was successful!`, rooms: roombooking, Guests: `For ${guests} people`, price: `${totalprice} kr`, bookingNumber: bookingID, dates: ` from ${checkIn} to ${checkOut}` } )
     } catch (error) {
         return responseMaker( 500, {message: "Sorry, the sytem does not seem to work properly!"} )
     } 
