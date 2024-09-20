@@ -254,6 +254,26 @@ async function fetchDateBooking(date) {
     throw new Error("Database connection error: " + error.message);
   }
 }
+async function checkBookingPossible(comparisonResults) {
+  for (const change of comparisonResults) {
+    const { date, rooms } = change;
+    const requiredRooms = rooms.split(",").map(Number);
+
+    // Fetch available rooms for the given date
+    const availableRoomsString = await fetchDateBooking(date);
+    const availableRooms = availableRoomsString.split(",").map(Number);
+
+    // Compare required rooms with available rooms
+    for (let i = 0; i < requiredRooms.length; i++) {
+      // Only check if the required rooms are more than 0
+      if (requiredRooms[i] > 0 && requiredRooms[i] > availableRooms[i]) {
+        return false; // Not enough rooms available for this date
+      }
+    }
+  }
+
+  return true; // All required rooms are available for all dates
+}
 
 exports.handler = async (event) => {
   try {
@@ -325,10 +345,21 @@ exports.handler = async (event) => {
     //freeRoomsDate = await fetchDateBooking(date);
     //returns an string ("1,2,3") => number of free romms that date, single, double, suites
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ message: newBooking }),
-    };
+    // Example usage in your handler
+    const roomsAreAvailable = await checkBookingPossible(comparisonResults);
+    if (!roomsAreAvailable) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({
+          error: "Not enough rooms available for the new booking.",
+        }),
+      };
+    } else {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ message: "The booking can be made" }),
+      };
+    }
 
     /** 
     return {
