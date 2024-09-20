@@ -156,12 +156,18 @@ exports.handler = async (event) => {
       };
     }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ originalBooking }),
+    // Convert originalBooking from booked room IDs to booked room types
+    const parsedOriginalRooms = parseDbRooms(originalBooking.rooms);
+    const convertedRoomsString = `${parsedOriginalRooms.singleRooms},${parsedOriginalRooms.doubleRooms},${parsedOriginalRooms.suites}`;
+    const convertedBooking = {
+      ...originalBooking,
+      rooms: convertedRoomsString,
     };
 
-    // Continue with your other logic...
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ originalBookingConverted: convertedBooking }),
+    };
   } catch (error) {
     console.error("Error in handler:", error);
     return {
