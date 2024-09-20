@@ -320,12 +320,14 @@ exports.handler = async (event) => {
        */
 
     // fetch freeRooms rooms("1,2,3 ") for a specific date
-    const date = "2024-01-02";
-    bookingsDate = await fetchDateBooking(date);
+    //const date = "2024-01-02";
+
+    //freeRoomsDate = await fetchDateBooking(date);
+    //returns an string ("1,2,3") => number of free romms that date, single, double, suites
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ roomStatus: bookingsDate }),
+      body: JSON.stringify({ message: newBooking }),
     };
 
     /** 
