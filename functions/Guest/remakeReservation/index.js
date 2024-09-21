@@ -425,15 +425,21 @@ exports.handler = async (event) => {
     const comparisonResults = compareBookingsDayByDay(
       convertedBooking,
       newBooking
-    ); //
+    );
     if (!comparisonResults) {
       return responseMaker(404, "error", "No changes in booking.");
+    }
+
+    // Check if all roomTypes & dates are free.
+    const bookingIsPossible = await checkBookingPossible(comparisonResults);
+    if (!bookingIsPossible) {
+      return responseMaker(404, "error", "Not enough roomS Free");
     }
 
     return {
       statusCode: 200,
       body: JSON.stringify({
-        comparisonResults: comparisonResults,
+        msg: "booking can be made.",
       }),
     };
 
