@@ -5,6 +5,7 @@ import {
   ScanCommand,
   BatchWriteItemCommand,
   BatchWriteCommand,
+  UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 require("dotenv").config();
 const client = new DynamoDBClient({});
@@ -460,6 +461,57 @@ async function deleteRooms(comparisonResults, BookingId) {
     }
   }
 }
+async function getRoomIdsByBookingId(BookingId) {
+  const getParams = {
+    TableName: "Rooms",
+    FilterExpression: "BookingId = :bookingId",
+    ExpressionAttributeValues: {
+      ":bookingId": BookingId,
+    },
+  };
+
+  try {
+    const result = await dynamoDb.send(new ScanCommand(getParams));
+    const rooms = result.Items || [];
+
+    // Collect all roomIds into an array
+    const roomIds = rooms.map((room) => room.roomId);
+
+    // Join the roomIds into a comma-separated string
+    return roomIds.join(",");
+  } catch (error) {
+    console.error("Error fetching room IDs:", error);
+    throw new Error("Database connection error: " + error.message);
+  }
+}
+async function updateBooking(updateBookingTable) {
+  const { BookingId, guests, rooms, checkIn, checkOut } = updateBookingTable;
+
+  const updateParams = {
+    TableName: "Bookings",
+    Key: { BookingId },
+    UpdateExpression:
+      "SET guests = :guests, rooms = :rooms, checkIn = :checkIn, checkOut = :checkOut",
+    ExpressionAttributeValues: {
+      ":guests": guests,
+      ":rooms": rooms,
+      ":checkIn": checkIn,
+      ":checkOut": checkOut,
+    },
+  };
+
+  try {
+    await dynamoDb.send(new UpdateCommand(updateParams));
+    console.log("Booking updated successfully:", BookingId);
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: "Booking updated successfully" }),
+    };
+  } catch (error) {
+    console.error("Error updating booking:", error);
+    throw new Error("Failed to update booking: " + error.message);
+  }
+}
 
 exports.handler = async (event) => {
   try {
@@ -496,6 +548,7 @@ exports.handler = async (event) => {
       convertedBooking,
       newBooking
     );
+    console.log("comparisonResults", comparisonResults);
     if (!comparisonResults) {
       return responseMaker(404, "error", "No changes in booking.");
     }
@@ -513,6 +566,9 @@ exports.handler = async (event) => {
     await deleteRooms(comparisonResults, BookingId);
 
     // update Bookings w newBooking-details
+    const roomIdsString = await getRoomIdsByBookingId(newBooking.BookingId);
+    const updateBookingTable = { ...newBooking, rooms: roomIdsString };
+    const updateResult = await updateBooking(updateBookingTable);
 
     return responseMaker(200, "msg", "all good");
   } catch (error) {
