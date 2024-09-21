@@ -515,7 +515,7 @@ async function updateBooking(updateBookingTable) {
 
 exports.handler = async (event) => {
   try {
-    //fetch variables and save to object.
+    // Fetch variables and save to object.
     const newBookingRoomsByType = JSON.parse(event.body);
 
     // Validate number of guests and number of roomTypes.
@@ -539,7 +539,7 @@ exports.handler = async (event) => {
       );
     }
 
-    // Convert roomIds in originalBooking (table: Bookings) to amount of rooms for each roomType => ("SR, DR, S")
+    // Convert originalBooking roomsByIds to roomsByType
     const parsedOriginalRooms = parseDbRooms(originalBookingRoomsByIds.rooms);
     const convertedRoomsString = `${parsedOriginalRooms.singleRooms},${parsedOriginalRooms.doubleRooms},${parsedOriginalRooms.suites}`;
     const originalBookingRoomsByType = {
