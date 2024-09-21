@@ -253,7 +253,7 @@ async function fetchDateBooking(date, format = "type") {
   }
 }
 
-async function checkBookingPossible(comparisonResults) {
+async function checkBookingIsPossible(comparisonResults) {
   for (const change of comparisonResults) {
     const { date, rooms } = change;
     const requiredRooms = rooms.split(",").map(Number); // Room differences to be accommodated
@@ -547,13 +547,27 @@ exports.handler = async (event) => {
       rooms: convertedRoomsString,
     };
 
+    // Compare originalBooking w newBooking
+    const diffrenceNewBookingOriginalBooking = compareBookingsDayByDay(
+      originalBookingRoomsByType,
+      newBookingRoomsByType
+    );
+    if (!diffrenceNewBookingOriginalBooking) {
+      return responseMaker(404, "error", "No changes in booking.");
+    }
+
+    // Check if all roomTypes & dates are free.
+    const newBookingIsPossible = await checkBookingIsPossible(
+      diffrenceNewBookingOriginalBooking
+    );
+    if (!newBookingIsPossible) {
+      return responseMaker(404, "error", "Not enough roomS Free");
+    }
+
     return {
       statusCode: 200,
       body: JSON.stringify({
-        newBookingRoomsByType: newBookingRoomsByType,
-        validateGuestsAndRooms: validateGuestsAndRooms,
-        originalBookingRoomsByIds: originalBookingRoomsByIds,
-        originalBookingRoomsByType: originalBookingRoomsByType,
+        newBookingIsPossible: newBookingIsPossible,
       }),
     };
 
@@ -561,21 +575,9 @@ exports.handler = async (event) => {
 
     
   
-    //compare originalBooking w newBooking => return change for each date [{"YYYY-MM-DD", "1, 2, 3"}, {"YYYY-MM-DD", "1, 2, 3"}]
-    const comparisonResults = compareBookingsDayByDay(
-      convertedBooking,
-      newBooking
-    );
-    console.log("comparisonResults", comparisonResults);
-    if (!comparisonResults) {
-      return responseMaker(404, "error", "No changes in booking.");
-    }
+   
 
-    // Check if all roomTypes & dates are free.
-    const bookingIsPossible = await checkBookingPossible(comparisonResults);
-    if (!bookingIsPossible) {
-      return responseMaker(404, "error", "Not enough roomS Free");
-    }
+    /
 
     // book all the extra Rooms
     const bookedRooms = await bookNewRooms(comparisonResults, BookingId);
