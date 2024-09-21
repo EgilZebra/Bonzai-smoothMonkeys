@@ -206,7 +206,7 @@ exports.handler = async (event) => {
       checkOut,
     } = JSON.parse(event.body);
 
-    //create object for newBooking
+    //create object for newBooking => {}
     const newBooking = {
       BookingId,
       guests,
@@ -215,7 +215,7 @@ exports.handler = async (event) => {
       checkOut,
     };
 
-    // Validate guest count
+    // Validate guest count => true/ false
     const parsedApiRooms = parseApiRooms(roomsString);
     if (!isGuestCountValid(guests, parsedApiRooms)) {
       return {
@@ -224,7 +224,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // Fetch the original booking info
+    // Fetch the original booking => [{}]
     const originalBooking = await connectAndFetchBooking(BookingId);
     if (!originalBooking) {
       return {
@@ -235,7 +235,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // Convert roomIds to amount of rooms for each roomType
+    // Convert roomIds in originalBooking to amount of rooms for each roomType => ("1, 2, 3")
     const parsedOriginalRooms = parseDbRooms(originalBooking.rooms);
     const convertedRoomsString = `${parsedOriginalRooms.singleRooms},${parsedOriginalRooms.doubleRooms},${parsedOriginalRooms.suites}`;
     const convertedBooking = {
@@ -243,7 +243,7 @@ exports.handler = async (event) => {
       rooms: convertedRoomsString,
     };
 
-    //compare originalBooking w newBooking
+    //compare originalBooking w newBooking => [{"YYYY-MM-DD", "1, 2, 3"}, {"YYYY-MM-DD", "1, 2, 3"}]
     const comparisonResults = compareBookingsDayByDay(
       convertedBooking,
       newBooking
@@ -255,7 +255,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // freeRooms specific date
+    // freeRooms specific date => "1, 2, 3"
     const mockDate = "2024-01-01";
     const freeRoomsDate = await fetchDateBooking(mockDate);
 
@@ -265,7 +265,7 @@ exports.handler = async (event) => {
         //originalBooking: originalBooking, works
         //convertedBooking: convertedBooking, works
         //comparisonResults: comparisonResults, works
-        //newBooking: newBooking, works
+        //newBooking: newBooking,
         //freeRoomsDate: freeRoomsDate, works
         message: "api call worked.",
       }),
