@@ -48,6 +48,14 @@ function isGuestCountValid(guestCount, rooms) {
     message: "Guest count and room allocation are valid.",
   };
 }
+function responseMaker(statusCode, type, text) {
+  return {
+    statusCode: statusCode,
+    body: JSON.stringify({
+      [type]: text,
+    }),
+  };
+}
 
 function parseDbRooms(roomsString) {
   const roomIds = roomsString.split(",").map(Number);
@@ -245,7 +253,7 @@ async function connectAndFetchBooking(BookingId) {
     const originalBookingResult = await dynamoDb.send(
       new GetCommand(getParams)
     );
-    return originalBookingResult.Item; // Return the fetched booking
+    return originalBookingResult.Item;
   } catch (error) {
     console.error("Error fetching booking:", error);
     throw new Error("Database connection error.");
@@ -342,50 +350,42 @@ async function bookNewRooms(comparisonResults, BookingId) {
 }
 
 exports.handler = async (event) => {
-  //fetch variables and save to object.
   try {
+    //fetch variables and save to object.
     const newBooking = ({ BookingId, guests, rooms, checkIn, checkOut } =
       JSON.parse(event.body));
 
     // Validate number of guests and number of roomTypes.
     const validateGuestsAndRooms = isGuestCountValid(guests, rooms);
     if (!validateGuestsAndRooms.isValid) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({
-          msg: validateGuestsAndRooms.message, // Use the detailed validation message
-        }),
-      };
+      return responseMaker(404, "error", validateGuestsAndRooms.message);
     }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        msg: "guest valid",
-      }),
-    };
-
-    /**
-    // Fetch the original booking => [{}]
+    // Fetch the original booking.
     const originalBooking = await connectAndFetchBooking(BookingId);
     if (!originalBooking) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({
-          error: `No booking found with BookingId ${BookingId}.`,
-        }),
-      };
+      return responseMaker(
+        404,
+        "error",
+        `No booking found with BookingId ${BookingId}.`
+      );
     }
- */
-    /**
-    // Convert roomIds in originalBooking to amount of rooms for each roomType => ("1, 2, 3")
+
+    // Convert roomIds in originalBooking (table: Bookings) to amount of rooms for each roomType => ("1, 2, 3")
     const parsedOriginalRooms = parseDbRooms(originalBooking.rooms);
     const convertedRoomsString = `${parsedOriginalRooms.singleRooms},${parsedOriginalRooms.doubleRooms},${parsedOriginalRooms.suites}`;
     const convertedBooking = {
       ...originalBooking,
       rooms: convertedRoomsString,
     };
- */
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        convertedRoomsString: convertedRoomsString,
+      }),
+    };
+
     /**
     //compare originalBooking w newBooking => [{"YYYY-MM-DD", "1, 2, 3"}, {"YYYY-MM-DD", "1, 2, 3"}]
     const comparisonResults = compareBookingsDayByDay(
