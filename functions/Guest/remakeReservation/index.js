@@ -371,7 +371,7 @@ exports.handler = async (event) => {
       );
     }
 
-    // Convert roomIds in originalBooking (table: Bookings) to amount of rooms for each roomType => ("1, 2, 3")
+    // Convert roomIds in originalBooking (table: Bookings) to amount of rooms for each roomType => ("SR, DR, S")
     const parsedOriginalRooms = parseDbRooms(originalBooking.rooms);
     const convertedRoomsString = `${parsedOriginalRooms.singleRooms},${parsedOriginalRooms.doubleRooms},${parsedOriginalRooms.suites}`;
     const convertedBooking = {
@@ -379,29 +379,22 @@ exports.handler = async (event) => {
       rooms: convertedRoomsString,
     };
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        convertedRoomsString: convertedRoomsString,
-      }),
-    };
-
-    /**
-    //compare originalBooking w newBooking => [{"YYYY-MM-DD", "1, 2, 3"}, {"YYYY-MM-DD", "1, 2, 3"}]
+    //compare originalBooking w newBooking => return change for each dates [{"YYYY-MM-DD", "1, 2, 3"}, {"YYYY-MM-DD", "1, 2, 3"}]
     const comparisonResults = compareBookingsDayByDay(
       convertedBooking,
       newBooking
-    );
-    console.log("comparisonResult", comparisonResults);
-    console.log("comparisonResult-error", comparisonResults.error);
-    if (comparisonResults.error) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: "No changes in new booking" }),
-      };
+    ); // FUNKAR EJ
+    if (!comparisonResults) {
+      return responseMaker(404, "error", "No changes in booking.");
     }
 
-     */
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        comparisonResults: comparisonResults,
+      }),
+    };
+
     /**
     // freeRooms specific date => "1, 2, 3"
     const mockDate = "2024-01-01";
