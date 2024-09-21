@@ -5,7 +5,6 @@ import {
   ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
 require("dotenv").config();
-
 const client = new DynamoDBClient({});
 const dynamoDb = DynamoDBDocumentClient.from(client);
 
@@ -197,6 +196,7 @@ async function connectAndFetchBooking(BookingId) {
 }
 
 exports.handler = async (event) => {
+  //fetch variables from API-call
   try {
     const {
       BookingId,
@@ -206,6 +206,7 @@ exports.handler = async (event) => {
       checkOut,
     } = JSON.parse(event.body);
 
+    //create object for newBooking
     const newBooking = {
       BookingId,
       guests,
@@ -234,6 +235,7 @@ exports.handler = async (event) => {
       };
     }
 
+    // Convert roomIds to amount of rooms for each roomType
     const parsedOriginalRooms = parseDbRooms(originalBooking.rooms);
     const convertedRoomsString = `${parsedOriginalRooms.singleRooms},${parsedOriginalRooms.doubleRooms},${parsedOriginalRooms.suites}`;
     const convertedBooking = {
@@ -241,6 +243,7 @@ exports.handler = async (event) => {
       rooms: convertedRoomsString,
     };
 
+    //compare originalBooking w newBooking
     const comparisonResults = compareBookingsDayByDay(
       convertedBooking,
       newBooking
@@ -259,30 +262,14 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        //originalBooking: originalBooking,
-        //convertedBooking: convertedBooking,
-        //comparisonResults: comparisonResults,
-        //newBooking: newBooking,
-        freeRoomsDate: freeRoomsDate,
+        //originalBooking: originalBooking, works
+        //convertedBooking: convertedBooking, works
+        //comparisonResults: comparisonResults, works
+        //newBooking: newBooking, works
+        //freeRoomsDate: freeRoomsDate, works
+        message: "api call worked.",
       }),
     };
-
-    /**
-    const roomsAreAvailable = await checkBookingPossible(comparisonResults);
-    if (!roomsAreAvailable) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({
-          error: "Not enough rooms available for the new booking.",
-        }),
-      };
-    } else {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ message: "The booking can be made" }),
-      };
-    }
-       */
   } catch (error) {
     console.error("Error in handler:", error);
     return {
