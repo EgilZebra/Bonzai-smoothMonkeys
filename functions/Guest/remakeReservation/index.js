@@ -516,33 +516,51 @@ async function updateBooking(updateBookingTable) {
 exports.handler = async (event) => {
   try {
     //fetch variables and save to object.
-    const newBooking = ({ BookingId, guests, rooms, checkIn, checkOut } =
-      JSON.parse(event.body));
+    const newBookingRoomsByType = JSON.parse(event.body);
 
     // Validate number of guests and number of roomTypes.
-    const validateGuestsAndRooms = isGuestCountValid(guests, rooms);
+    const validateGuestsAndRooms = isGuestCountValid(
+      newBookingRoomsByType.guests,
+      newBookingRoomsByType.rooms
+    );
     if (!validateGuestsAndRooms.isValid) {
       return responseMaker(404, "error", validateGuestsAndRooms.message);
     }
 
     // Fetch the original booking.
-    const originalBooking = await connectAndFetchBooking(BookingId);
-    if (!originalBooking) {
+    const originalBookingRoomsByIds = await connectAndFetchBooking(
+      newBookingRoomsByType.BookingId
+    );
+    if (!originalBookingRoomsByIds) {
       return responseMaker(
         404,
         "error",
-        `No booking found with BookingId ${BookingId}.`
+        `No booking found with BookingId ${newBookingRoomsByType.BookingId}.`
       );
     }
 
     // Convert roomIds in originalBooking (table: Bookings) to amount of rooms for each roomType => ("SR, DR, S")
-    const parsedOriginalRooms = parseDbRooms(originalBooking.rooms);
+    const parsedOriginalRooms = parseDbRooms(originalBookingRoomsByIds.rooms);
     const convertedRoomsString = `${parsedOriginalRooms.singleRooms},${parsedOriginalRooms.doubleRooms},${parsedOriginalRooms.suites}`;
-    const convertedBooking = {
-      ...originalBooking,
+    const originalBookingRoomsByType = {
+      ...originalBookingRoomsByIds,
       rooms: convertedRoomsString,
     };
 
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        newBookingRoomsByType: newBookingRoomsByType,
+        validateGuestsAndRooms: validateGuestsAndRooms,
+        originalBookingRoomsByIds: originalBookingRoomsByIds,
+        originalBookingRoomsByType: originalBookingRoomsByType,
+      }),
+    };
+
+    /**
+
+    
+  
     //compare originalBooking w newBooking => return change for each date [{"YYYY-MM-DD", "1, 2, 3"}, {"YYYY-MM-DD", "1, 2, 3"}]
     const comparisonResults = compareBookingsDayByDay(
       convertedBooking,
@@ -570,7 +588,7 @@ exports.handler = async (event) => {
     const updateBookingTable = { ...newBooking, rooms: roomIdsString };
     const updateResult = await updateBooking(updateBookingTable);
 
-    return responseMaker(200, "msg", "all good");
+    return responseMaker(200, "msg", "all good"); */
   } catch (error) {
     console.error("Error in handler:", error);
     return {
