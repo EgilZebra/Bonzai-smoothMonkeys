@@ -391,6 +391,76 @@ async function bookNewRooms(comparisonResults, BookingId) {
   }
 }
 
+async function deleteRooms(comparisonResults, BookingId) {
+  for (const change of comparisonResults) {
+    const { date, rooms } = change;
+    const requiredRooms = rooms.split(",").map(Number);
+
+    for (let i = 0; i < requiredRooms.length; i++) {
+      if (requiredRooms[i] < 0) {
+        const roomType = i === 0 ? "single" : i === 1 ? "double" : "suite";
+        const roomsToDelete = Math.abs(requiredRooms[i]);
+
+        // Fetch the IDs of rooms booked for this BookingId and date
+        const getParams = {
+          TableName: "Rooms",
+          FilterExpression: "BookingId = :bookingId and #d = :date",
+          ExpressionAttributeNames: {
+            "#d": "date",
+          },
+          ExpressionAttributeValues: {
+            ":bookingId": BookingId,
+            ":date": date,
+          },
+        };
+
+        try {
+          const result = await dynamoDb.send(new ScanCommand(getParams));
+          const bookedRooms = result.Items || [];
+
+          // Filter room IDs by type and limit to the number we need to delete
+          const roomIdsToDelete = bookedRooms
+            .filter((room) => {
+              const roomId = Number(room.roomId);
+              return (
+                (roomType === "single" && roomId >= 1 && roomId <= 10) ||
+                (roomType === "double" && roomId >= 11 && roomId <= 15) ||
+                (roomType === "suite" && roomId >= 16 && roomId <= 20)
+              );
+            })
+            .slice(0, roomsToDelete); // Take only the number we need to delete
+
+          // Prepare delete requests
+          const deleteRequests = roomIdsToDelete.map((room) => ({
+            DeleteRequest: {
+              Key: {
+                roomId: room.roomId, // roomId is a string
+                date: date,
+              },
+            },
+          }));
+
+          if (deleteRequests.length > 0) {
+            const params = {
+              RequestItems: {
+                Rooms: deleteRequests,
+              },
+            };
+
+            await dynamoDb.send(new BatchWriteCommand(params));
+            console.log(
+              `Deleted ${deleteRequests.length} ${roomType} rooms for BookingId ${BookingId} on date ${date}.`
+            );
+          }
+        } catch (error) {
+          console.error("Error deleting rooms:", error);
+          throw new Error("Failed to delete rooms: " + error.message);
+        }
+      }
+    }
+  }
+}
+
 exports.handler = async (event) => {
   try {
     //fetch variables and save to object.
@@ -438,11 +508,13 @@ exports.handler = async (event) => {
 
     // book all the extra Rooms
     const bookedRooms = await bookNewRooms(comparisonResults, BookingId);
-    return responseMaker(200, "bookedRooms", bookedRooms);
 
     // delete rooms if the newBooking contains less rooms.
+    await deleteRooms(comparisonResults, BookingId);
 
     // update Bookings w newBooking-details
+
+    return responseMaker(200, "msg", "all good");
   } catch (error) {
     console.error("Error in handler:", error);
     return {
