@@ -10,9 +10,43 @@ require("dotenv").config();
 const client = new DynamoDBClient({});
 const dynamoDb = DynamoDBDocumentClient.from(client);
 
-function parseApiRooms(roomsString) {
-  const [singleRooms, doubleRooms, suites] = roomsString.split(",").map(Number);
-  return { singleRooms, doubleRooms, suites };
+function isGuestCountValid(guestCount, rooms) {
+  const [singleRooms, doubleRooms, suites] = rooms.split(",").map(Number);
+  const guests = Number(guestCount);
+
+  if (singleRooms > 10) {
+    return {
+      isValid: false,
+      message: "Sorry, the hotel only have 10 singlerooms",
+    };
+  }
+
+  if (doubleRooms > 5) {
+    return {
+      isValid: false,
+      message: "Sorry, the hotel only have 5 doublerooms",
+    };
+  }
+
+  if (suites > 5) {
+    return {
+      isValid: false,
+      message: "Sorry, the hotel only have 5 suites",
+    };
+  }
+
+  if (guests > singleRooms + doubleRooms * 2 + suites * 3) {
+    return {
+      isValid: false,
+      message:
+        "Sorry, you can max stay 1 person in singles, 2 in doubles and 3 in suites and your provided number of guests exceeds that. Book more rooms or less guests.",
+    };
+  }
+
+  return {
+    isValid: true,
+    message: "Guest count and room allocation are valid.",
+  };
 }
 
 function parseDbRooms(roomsString) {
@@ -32,20 +66,6 @@ function parseDbRooms(roomsString) {
   });
 
   return { singleRooms, doubleRooms, suites };
-}
-
-function isGuestCountValid(guests, rooms) {
-  const MAX_SINGLE_ROOM_CAPACITY = 1;
-  const MAX_DOUBLE_ROOM_CAPACITY = 2;
-  const MAX_SUITE_ROOM_CAPACITY = 3;
-  const { singleRooms, doubleRooms, suites } = rooms;
-  const totalCapacity =
-    singleRooms * MAX_SINGLE_ROOM_CAPACITY +
-    doubleRooms * MAX_DOUBLE_ROOM_CAPACITY +
-    suites * MAX_SUITE_ROOM_CAPACITY;
-
-  console.log(`Total Capacity: ${totalCapacity}, Guests: ${guests}`);
-  return guests <= totalCapacity;
 }
 
 function compareBookings(originalBooking, newBooking) {
@@ -322,34 +342,30 @@ async function bookNewRooms(comparisonResults, BookingId) {
 }
 
 exports.handler = async (event) => {
-  //fetch variables from API-call
+  //fetch variables and save to object.
   try {
-    const {
-      BookingId,
-      guests,
-      rooms: roomsString,
-      checkIn,
-      checkOut,
-    } = JSON.parse(event.body);
+    const newBooking = ({ BookingId, guests, rooms, checkIn, checkOut } =
+      JSON.parse(event.body));
 
-    //create object for newBooking => {}
-    const newBooking = {
-      BookingId,
-      guests,
-      rooms: roomsString,
-      checkIn,
-      checkOut,
-    };
-
-    // Validate guest count => true/ false
-    const parsedApiRooms = parseApiRooms(roomsString);
-    if (!isGuestCountValid(guests, parsedApiRooms)) {
+    // Validate number of guests and number of roomTypes.
+    const validateGuestRooms = isGuestCountValid(guests, rooms);
+    if (!validateGuestRooms.isValid) {
       return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "Guest count not valid" }),
+        statusCode: 404,
+        body: JSON.stringify({
+          msg: validateGuestRooms.message, // Use the detailed validation message
+        }),
       };
     }
 
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        msg: "guest valid",
+      }),
+    };
+
+    /**
     // Fetch the original booking => [{}]
     const originalBooking = await connectAndFetchBooking(BookingId);
     if (!originalBooking) {
@@ -360,7 +376,8 @@ exports.handler = async (event) => {
         }),
       };
     }
-
+ */
+    /**
     // Convert roomIds in originalBooking to amount of rooms for each roomType => ("1, 2, 3")
     const parsedOriginalRooms = parseDbRooms(originalBooking.rooms);
     const convertedRoomsString = `${parsedOriginalRooms.singleRooms},${parsedOriginalRooms.doubleRooms},${parsedOriginalRooms.suites}`;
@@ -368,12 +385,15 @@ exports.handler = async (event) => {
       ...originalBooking,
       rooms: convertedRoomsString,
     };
-
+ */
+    /**
     //compare originalBooking w newBooking => [{"YYYY-MM-DD", "1, 2, 3"}, {"YYYY-MM-DD", "1, 2, 3"}]
     const comparisonResults = compareBookingsDayByDay(
       convertedBooking,
       newBooking
     );
+    console.log("comparisonResult", comparisonResults);
+    console.log("comparisonResult-error", comparisonResults.error);
     if (comparisonResults.error) {
       return {
         statusCode: 404,
@@ -381,6 +401,7 @@ exports.handler = async (event) => {
       };
     }
 
+     */
     /**
     // freeRooms specific date => "1, 2, 3"
     const mockDate = "2024-01-01";
@@ -393,7 +414,7 @@ exports.handler = async (event) => {
       }),
     };
     */
-
+    /**
     // Check if all roomTypes & dates are free.
     const bookingIsPossible = await checkBookingPossible(comparisonResults);
     if (!bookingIsPossible) {
@@ -416,7 +437,7 @@ exports.handler = async (event) => {
         message: "Successfully booked rooms:",
         bookedRooms: bookedRooms,
       }),
-    };
+    }; */
   } catch (error) {
     console.error("Error in handler:", error);
     return {
