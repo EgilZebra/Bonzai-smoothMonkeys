@@ -421,11 +421,11 @@ exports.handler = async (event) => {
       rooms: convertedRoomsString,
     };
 
-    //compare originalBooking w newBooking => return change for each dates [{"YYYY-MM-DD", "1, 2, 3"}, {"YYYY-MM-DD", "1, 2, 3"}]
+    //compare originalBooking w newBooking => return change for each date [{"YYYY-MM-DD", "1, 2, 3"}, {"YYYY-MM-DD", "1, 2, 3"}]
     const comparisonResults = compareBookingsDayByDay(
       convertedBooking,
       newBooking
-    ); // FUNKAR EJ
+    ); //
     if (!comparisonResults) {
       return responseMaker(404, "error", "No changes in booking.");
     }
