@@ -3,6 +3,8 @@ import {
   DynamoDBDocumentClient,
   GetCommand,
   ScanCommand,
+  BatchWriteItemCommand,
+  BatchWriteCommand,
 } from "@aws-sdk/lib-dynamodb";
 require("dotenv").config();
 const client = new DynamoDBClient({});
@@ -111,7 +113,7 @@ function compareBookingsDayByDay(originalBooking, newBooking) {
     : results;
 }
 
-async function fetchDateBooking(date) {
+async function fetchDateBooking(date, format = "type") {
   const getParams = {
     TableName: "Rooms",
     FilterExpression: "#d = :date",
@@ -128,35 +130,58 @@ async function fetchDateBooking(date) {
     const result = await dynamoDb.send(new ScanCommand(getParams));
     const bookings = result.Items || [];
 
-    let singleRoomsBooked = 0;
-    let doubleRoomsBooked = 0;
-    let suitesBooked = 0;
+    // Keep track of booked room IDs as strings
+    let bookedRoomIds = new Set();
 
+    // Collect all room IDs from the bookings
     bookings.forEach((booking) => {
-      const roomId = booking.roomId;
-      if (roomId >= 1 && roomId <= 10) {
-        singleRoomsBooked++;
-      } else if (roomId >= 11 && roomId <= 15) {
-        doubleRoomsBooked++;
-      } else if (roomId >= 16 && roomId <= 20) {
-        suitesBooked++;
-      }
+      bookedRoomIds.add(booking.roomId); // roomId is a string
     });
 
-    const totalSingleRooms = 10;
-    const totalDoubleRooms = 5;
-    const totalSuites = 5;
+    // Define total room IDs by type (as strings)
+    const totalSingleRoomIds = Array.from({ length: 10 }, (_, i) =>
+      (i + 1).toString()
+    ); // ["1", "2", ..., "10"]
+    const totalDoubleRoomIds = Array.from({ length: 5 }, (_, i) =>
+      (i + 11).toString()
+    ); // ["11", "12", ..., "15"]
+    const totalSuiteRoomIds = Array.from({ length: 5 }, (_, i) =>
+      (i + 16).toString()
+    ); // ["16", "17", ..., "20"]
 
-    const availableSingleRooms = totalSingleRooms - singleRoomsBooked;
-    const availableDoubleRooms = totalDoubleRooms - doubleRoomsBooked;
-    const availableSuites = totalSuites - suitesBooked;
+    // Calculate free room IDs
+    const availableSingleRoomIds = totalSingleRoomIds.filter(
+      (id) => !bookedRoomIds.has(id)
+    );
+    const availableDoubleRoomIds = totalDoubleRoomIds.filter(
+      (id) => !bookedRoomIds.has(id)
+    );
+    const availableSuiteRoomIds = totalSuiteRoomIds.filter(
+      (id) => !bookedRoomIds.has(id)
+    );
 
-    return `${availableSingleRooms},${availableDoubleRooms},${availableSuites}`;
+    if (format === "ids") {
+      // Return free room IDs as a single string
+      const allAvailableRoomIds = [
+        ...availableSingleRoomIds,
+        ...availableDoubleRoomIds,
+        ...availableSuiteRoomIds,
+      ];
+      return allAvailableRoomIds.join(",");
+    } else {
+      // Default: return the count of free rooms by type
+      const availableSingleRooms = availableSingleRoomIds.length;
+      const availableDoubleRooms = availableDoubleRoomIds.length;
+      const availableSuites = availableSuiteRoomIds.length;
+
+      return `${availableSingleRooms},${availableDoubleRooms},${availableSuites}`;
+    }
   } catch (error) {
     console.error("Error fetching bookings:", error);
     throw new Error("Database connection error: " + error.message);
   }
 }
+
 async function checkBookingPossible(comparisonResults) {
   for (const change of comparisonResults) {
     const { date, rooms } = change;
@@ -204,6 +229,98 @@ async function connectAndFetchBooking(BookingId) {
   } catch (error) {
     console.error("Error fetching booking:", error);
     throw new Error("Database connection error.");
+  }
+}
+
+async function bookNewRooms(comparisonResults, BookingId) {
+  const roomIdMappings = {
+    single: Array.from({ length: 10 }, (_, i) => i + 1), // Room IDs 1-10
+    double: Array.from({ length: 5 }, (_, i) => i + 11), // Room IDs 11-15
+    suite: Array.from({ length: 5 }, (_, i) => i + 16), // Room IDs 16-20
+  };
+
+  const bookedRooms = [];
+
+  for (const change of comparisonResults) {
+    const { date, rooms } = change;
+    const requiredRooms = rooms.split(",").map(Number);
+
+    // Fetch booked room IDs for the specific date
+    const bookedRoomIdsString = await fetchDateBooking(date, "ids");
+    const bookedRoomIds = new Set(bookedRoomIdsString.split(",").map(Number));
+
+    // Allocate room IDs based on required rooms for each type
+    for (let i = 0; i < requiredRooms.length; i++) {
+      const roomType = i === 0 ? "single" : i === 1 ? "double" : "suite";
+      const availableRoomIds = roomIdMappings[roomType].filter(
+        (id) => !bookedRoomIds.has(id) // Filter out booked room IDs
+      );
+
+      console.log(
+        `Available ${roomType} rooms for date ${date}:`,
+        availableRoomIds
+      );
+
+      // Book the required number of rooms
+      for (let j = 0; j < requiredRooms[i]; j++) {
+        const availableRoomId = availableRoomIds[j]; // Get the next available room ID
+        if (availableRoomId) {
+          bookedRooms.push({
+            roomId: availableRoomId,
+            BookingId,
+            date,
+          });
+        } else {
+          console.log(
+            `Not enough available rooms of type ${roomType} for date ${date}.`
+          );
+        }
+      }
+    }
+  }
+
+  // Check if any rooms were booked
+  if (bookedRooms.length === 0) {
+    console.log(`No rooms booked for the given dates.`);
+    return {
+      statusCode: 404,
+      body: JSON.stringify({
+        message: "No rooms available to book.",
+      }),
+    };
+  }
+
+  // Insert bookings into DynamoDB
+  const putRequests = bookedRooms.map((room) => ({
+    PutRequest: {
+      Item: {
+        roomId: room.roomId.toString(), // Ensure roomId is a string
+        date: room.date,
+        BookingId: room.BookingId,
+      },
+    },
+  }));
+
+  const params = {
+    RequestItems: {
+      Rooms: putRequests, // The table name for the bookings
+    },
+  };
+
+  try {
+    await dynamoDb.send(new BatchWriteCommand(params)); // Use BatchWriteCommand
+    console.log("Rooms booked successfully:", bookedRooms);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        message: "Rooms booked successfully",
+        bookedRooms,
+      }),
+    };
+  } catch (error) {
+    console.error("Error booking rooms:", error);
+    throw new Error("Booking failed: " + error.message);
   }
 }
 
@@ -267,9 +384,18 @@ exports.handler = async (event) => {
       };
     }
 
+    /**
     // freeRooms specific date => "1, 2, 3"
-    //const mockDate = "2024-01-01";
-    //const freeRoomsDate = await fetchDateBooking(mockDate);
+    const mockDate = "2024-01-01";
+    const freeRoomsDate = await fetchDateBooking(mockDate, "ids");
+
+    return {
+      statusCode: 202,
+      body: JSON.stringify({
+        msg: freeRoomsDate,
+      }),
+    };
+    */
 
     // Kontrollera om det finns tillräckligt med lediga rum på berörda datum
     // loopa igenom datum och jämföra comparisonResults vs freeRommsDate
@@ -289,17 +415,40 @@ exports.handler = async (event) => {
         }),
       };
     }
+
+    //kontrollera vilka id på freeRooms
+    const mockDate = "2024-01-02";
+    const freeRoomsDate = await fetchDateBooking(mockDate, "ids");
+    return {
+      statusCode: 404,
+      body: JSON.stringify({
+        //originalBooking: originalBooking, works
+        //convertedBooking: convertedBooking, works
+        //comparisonResults: comparisonResults,
+        //newBooking: newBooking,
+        //freeRoomsDate: freeRoomsDate, works
+        message: freeRoomsDate,
+      }),
+    };
+
+    /**
+    //booKNewRooms
+    const bookedRooms = await bookNewRooms(comparisonResults, BookingId);
+    console.log("Successfully booked rooms:", bookedRooms);
+
     return {
       statusCode: 200,
       body: JSON.stringify({
         //originalBooking: originalBooking, works
         //convertedBooking: convertedBooking, works
-        //comparisonResults: comparisonResults, works
+        //comparisonResults: comparisonResults,
         //newBooking: newBooking,
         //freeRoomsDate: freeRoomsDate, works
-        message: "Booking is possible",
+        message: "Successfully booked rooms:",
+        bookedRooms: bookedRooms,
       }),
     };
+     */
   } catch (error) {
     console.error("Error in handler:", error);
     return {
