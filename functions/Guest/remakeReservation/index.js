@@ -436,12 +436,9 @@ exports.handler = async (event) => {
       return responseMaker(404, "error", "Not enough roomS Free");
     }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        msg: "booking can be made.",
-      }),
-    };
+    // book all the extraRooms
+    const bookedRooms = await bookNewRooms(comparisonResults, BookingId);
+    return responseMaker(404, "bookedRooms", bookedRooms);
 
     /**
     // freeRooms specific date => "1, 2, 3"
