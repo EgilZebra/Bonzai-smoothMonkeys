@@ -348,12 +348,12 @@ exports.handler = async (event) => {
       JSON.parse(event.body));
 
     // Validate number of guests and number of roomTypes.
-    const validateGuestRooms = isGuestCountValid(guests, rooms);
-    if (!validateGuestRooms.isValid) {
+    const validateGuestsAndRooms = isGuestCountValid(guests, rooms);
+    if (!validateGuestsAndRooms.isValid) {
       return {
         statusCode: 404,
         body: JSON.stringify({
-          msg: validateGuestRooms.message, // Use the detailed validation message
+          msg: validateGuestsAndRooms.message, // Use the detailed validation message
         }),
       };
     }
