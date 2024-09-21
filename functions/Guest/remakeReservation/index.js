@@ -95,6 +95,7 @@ function compareBookings(originalBooking, newBooking) {
 function compareBookingsDayByDay(originalBooking, newBooking) {
   const results = [];
 
+  // Helper function to generate an array of dates excluding the checkOut date
   function getDatesArray(startDate, endDate) {
     const dates = [];
     let currentDate = new Date(startDate);
@@ -107,38 +108,79 @@ function compareBookingsDayByDay(originalBooking, newBooking) {
     return dates;
   }
 
+  // Determine the earliest check-in and latest check-out
+  const earliestCheckIn = new Date(
+    Math.min(new Date(originalBooking.checkIn), new Date(newBooking.checkIn))
+  );
+
+  const latestCheckOut = new Date(
+    Math.max(new Date(originalBooking.checkOut), new Date(newBooking.checkOut))
+  );
+
+  // Generate booking date arrays
   const originalBookingDates = getDatesArray(
     originalBooking.checkIn,
     originalBooking.checkOut
   );
+
   const newBookingDates = getDatesArray(
     newBooking.checkIn,
     newBooking.checkOut
   );
 
-  const allDates = new Set([...originalBookingDates, ...newBookingDates]);
+  // Combine all dates from both bookings, removing duplicates
+  const allDates = getDatesArray(
+    earliestCheckIn.toISOString().split("T")[0],
+    latestCheckOut.toISOString().split("T")[0]
+  );
+
   const originalRoomsArray = originalBooking.rooms.split(",").map(Number);
   const newRoomsArray = newBooking.rooms.split(",").map(Number);
 
+  let hasChanges = false;
+
+  // Iterate through all dates in the combined date set
   allDates.forEach((date) => {
     const originalHasDate = originalBookingDates.includes(date);
     const newHasDate = newBookingDates.includes(date);
 
+    // If both original and new bookings contain the date, compare room differences
     if (originalHasDate && newHasDate) {
       const roomDifferences = originalRoomsArray.map(
         (roomCount, index) => newRoomsArray[index] - roomCount
       );
 
+      // If there's a difference in the rooms, mark hasChanges as true
+      if (roomDifferences.some((difference) => difference !== 0)) {
+        hasChanges = true;
+        results.push({
+          date,
+          rooms: roomDifferences.join(","),
+        });
+      }
+    } else if (newHasDate && !originalHasDate) {
+      // New booking contains a date not in the original (e.g., an extension)
+      hasChanges = true;
       results.push({
         date,
-        rooms: roomDifferences.join(","),
+        rooms: newRoomsArray.join(","),
+      });
+    } else if (originalHasDate && !newHasDate) {
+      // Original booking has a date not in the new booking (e.g., cancellation)
+      hasChanges = true;
+      results.push({
+        date,
+        rooms: originalRoomsArray.map((count) => -count).join(","), // Indicate rooms are not needed
       });
     }
   });
 
-  return results.length === 0
-    ? { error: "No differences found between the bookings." }
-    : results;
+  // If no changes were detected in rooms or dates, return false
+  if (!hasChanges) {
+    return false;
+  }
+
+  return results;
 }
 
 async function fetchDateBooking(date, format = "type") {
