@@ -394,54 +394,25 @@ exports.handler = async (event) => {
     };
     */
 
-    // Kontrollera om det finns tillräckligt med lediga rum på berörda datum
-    // loopa igenom datum och jämföra comparisonResults vs freeRommsDate
-    // går detta igenom utan en return false så returnerar vi true.
-    // köra en if/ else return baserat på variablen
+    // Check if all roomTypes & dates are free.
     const bookingIsPossible = await checkBookingPossible(comparisonResults);
     if (!bookingIsPossible) {
       return {
         statusCode: 404,
         body: JSON.stringify({
-          //originalBooking: originalBooking, works
-          //convertedBooking: convertedBooking, works
-          //comparisonResults: comparisonResults,
-          //newBooking: newBooking,
-          //freeRoomsDate: freeRoomsDate, works
           message: "Not enough freeRooms to make booking",
         }),
       };
     }
 
-    /** 
-    //kontrollera vilka id på freeRooms
-    const mockDate = "2024-01-02";
-    const freeRoomsDate = await fetchDateBooking(mockDate, "ids");
-    return {
-      statusCode: 404,
-      body: JSON.stringify({
-        //originalBooking: originalBooking, works
-        //convertedBooking: convertedBooking, works
-        //comparisonResults: comparisonResults,
-        //newBooking: newBooking,
-        //freeRoomsDate: freeRoomsDate, works
-        message: freeRoomsDate,
-      }),
-    };
-    */
-
-    //booKNewRooms
+    // Try to book all the roomTypes in the newBooking. Error-return is in the function bookNewRooms.
+    // If it return here it means the booking went through.
     const bookedRooms = await bookNewRooms(comparisonResults, BookingId);
     console.log("Successfully booked rooms:", bookedRooms);
 
     return {
       statusCode: 200,
       body: JSON.stringify({
-        //originalBooking: originalBooking, works
-        //convertedBooking: convertedBooking, works
-        //comparisonResults: comparisonResults,
-        //newBooking: newBooking,
-        //freeRoomsDate: freeRoomsDate, works
         message: "Successfully booked rooms:",
         bookedRooms: bookedRooms,
       }),
