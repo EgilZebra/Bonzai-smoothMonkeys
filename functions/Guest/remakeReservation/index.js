@@ -157,24 +157,36 @@ async function fetchDateBooking(date) {
     throw new Error("Database connection error: " + error.message);
   }
 }
-
 async function checkBookingPossible(comparisonResults) {
   for (const change of comparisonResults) {
     const { date, rooms } = change;
-    const requiredRooms = rooms.split(",").map(Number);
+    const requiredRooms = rooms.split(",").map(Number); // Room differences to be accommodated
 
+    console.log(`Checking rooms for date: ${date}`);
+    console.log(`Required rooms: ${requiredRooms}`);
+
+    // Fetch available rooms for the specific date
     const availableRoomsString = await fetchDateBooking(date);
     const availableRooms = availableRoomsString.split(",").map(Number);
 
+    console.log(`Available rooms on ${date}: ${availableRooms}`);
+
+    // Compare required vs available rooms for each room type
     for (let i = 0; i < requiredRooms.length; i++) {
       if (requiredRooms[i] > availableRooms[i]) {
         console.log(
           `Not enough rooms for date ${date}: Required ${requiredRooms[i]}, Available ${availableRooms[i]}`
         );
-        return false;
+        return false; // If not enough rooms are available, return false
+      } else {
+        console.log(
+          `Enough rooms for date ${date}: Required ${requiredRooms[i]}, Available ${availableRooms[i]}`
+        );
       }
     }
   }
+
+  // If all required rooms can be accommodated, return true
   return true;
 }
 
@@ -256,9 +268,27 @@ exports.handler = async (event) => {
     }
 
     // freeRooms specific date => "1, 2, 3"
-    const mockDate = "2024-01-01";
-    const freeRoomsDate = await fetchDateBooking(mockDate);
+    //const mockDate = "2024-01-01";
+    //const freeRoomsDate = await fetchDateBooking(mockDate);
 
+    // Kontrollera om det finns tillräckligt med lediga rum på berörda datum
+    // loopa igenom datum och jämföra comparisonResults vs freeRommsDate
+    // går detta igenom utan en return false så returnerar vi true.
+    // köra en if/ else return baserat på variablen
+    const bookingIsPossible = await checkBookingPossible(comparisonResults);
+    if (!bookingIsPossible) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({
+          //originalBooking: originalBooking, works
+          //convertedBooking: convertedBooking, works
+          //comparisonResults: comparisonResults,
+          //newBooking: newBooking,
+          //freeRoomsDate: freeRoomsDate, works
+          message: "Not enough freeRooms to make booking",
+        }),
+      };
+    }
     return {
       statusCode: 200,
       body: JSON.stringify({
@@ -267,7 +297,7 @@ exports.handler = async (event) => {
         //comparisonResults: comparisonResults, works
         //newBooking: newBooking,
         //freeRoomsDate: freeRoomsDate, works
-        message: "api call worked.",
+        message: "Booking is possible",
       }),
     };
   } catch (error) {
