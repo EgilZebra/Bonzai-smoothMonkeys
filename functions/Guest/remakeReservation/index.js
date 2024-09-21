@@ -245,25 +245,22 @@ async function bookNewRooms(comparisonResults, BookingId) {
     const { date, rooms } = change;
     const requiredRooms = rooms.split(",").map(Number);
 
-    // Fetch booked room IDs for the specific date
-    const bookedRoomIdsString = await fetchDateBooking(date, "ids");
-    const bookedRoomIds = new Set(bookedRoomIdsString.split(",").map(Number));
+    // Fetch available room IDs for the specific date
+    const availableRoomIdsString = await fetchDateBooking(date, "ids");
+    const availableRoomIds = new Set(
+      availableRoomIdsString.split(",").map(Number)
+    );
 
-    // Allocate room IDs based on required rooms for each type
+    // Book the required number of rooms
     for (let i = 0; i < requiredRooms.length; i++) {
       const roomType = i === 0 ? "single" : i === 1 ? "double" : "suite";
-      const availableRoomIds = roomIdMappings[roomType].filter(
-        (id) => !bookedRoomIds.has(id) // Filter out booked room IDs
-      );
-
-      console.log(
-        `Available ${roomType} rooms for date ${date}:`,
-        availableRoomIds
+      const availableRoomIdsOfType = roomIdMappings[roomType].filter((id) =>
+        availableRoomIds.has(id)
       );
 
       // Book the required number of rooms
       for (let j = 0; j < requiredRooms[i]; j++) {
-        const availableRoomId = availableRoomIds[j]; // Get the next available room ID
+        const availableRoomId = availableRoomIdsOfType[j]; // Get the next available room ID
         if (availableRoomId) {
           bookedRooms.push({
             roomId: availableRoomId,
@@ -272,7 +269,7 @@ async function bookNewRooms(comparisonResults, BookingId) {
           });
         } else {
           console.log(
-            `Not enough available rooms of type ${roomType} for date ${date}.`
+            `Not enough available ${roomType} rooms for date ${date}.`
           );
         }
       }
@@ -416,6 +413,7 @@ exports.handler = async (event) => {
       };
     }
 
+    /** 
     //kontrollera vilka id på freeRooms
     const mockDate = "2024-01-02";
     const freeRoomsDate = await fetchDateBooking(mockDate, "ids");
@@ -430,8 +428,8 @@ exports.handler = async (event) => {
         message: freeRoomsDate,
       }),
     };
+    */
 
-    /**
     //booKNewRooms
     const bookedRooms = await bookNewRooms(comparisonResults, BookingId);
     console.log("Successfully booked rooms:", bookedRooms);
@@ -448,7 +446,6 @@ exports.handler = async (event) => {
         bookedRooms: bookedRooms,
       }),
     };
-     */
   } catch (error) {
     console.error("Error in handler:", error);
     return {
