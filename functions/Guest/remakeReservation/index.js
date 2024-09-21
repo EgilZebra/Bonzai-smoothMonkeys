@@ -436,46 +436,13 @@ exports.handler = async (event) => {
       return responseMaker(404, "error", "Not enough roomS Free");
     }
 
-    // book all the extraRooms
+    // book all the extra Rooms
     const bookedRooms = await bookNewRooms(comparisonResults, BookingId);
-    return responseMaker(404, "bookedRooms", bookedRooms);
+    return responseMaker(200, "bookedRooms", bookedRooms);
 
-    /**
-    // freeRooms specific date => "1, 2, 3"
-    const mockDate = "2024-01-01";
-    const freeRoomsDate = await fetchDateBooking(mockDate, "ids");
+    // delete rooms if the newBooking contains less rooms.
 
-    return {
-      statusCode: 202,
-      body: JSON.stringify({
-        msg: freeRoomsDate,
-      }),
-    };
-    */
-    /**
-    // Check if all roomTypes & dates are free.
-    const bookingIsPossible = await checkBookingPossible(comparisonResults);
-    if (!bookingIsPossible) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({
-          message: "Not enough freeRooms to make booking",
-        }),
-      };
-    }
-
-    // Try to book all the roomTypes in the newBooking. Error-return is in the function bookNewRooms.
-    // If it return here it means the booking went through.
-    const bookedRooms = await bookNewRooms(comparisonResults, BookingId);
-    console.log("Successfully booked rooms:", bookedRooms);
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        message: "Successfully booked rooms:",
-        bookedRooms: bookedRooms,
-      }),
-    }; */
+    // update Bookings w newBooking-details
   } catch (error) {
     console.error("Error in handler:", error);
     return {
