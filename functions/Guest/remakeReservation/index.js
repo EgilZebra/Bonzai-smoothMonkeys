@@ -253,7 +253,7 @@ async function fetchDateBooking(date, format = "type") {
   }
 }
 
-async function checkBookingIsPossible(comparisonResults) {
+async function checkBookingIsPossibleOld(comparisonResults) {
   for (const change of comparisonResults) {
     const { date, rooms } = change;
     const requiredRooms = rooms.split(",").map(Number); // Room differences to be accommodated
@@ -512,6 +512,57 @@ async function updateBooking(updateBookingTable) {
     throw new Error("Failed to update booking: " + error.message);
   }
 }
+async function fetchFreeRooms(date, bookingId) {
+  console.log("bookingId----", bookingId);
+  const getParams = {
+    TableName: "Rooms",
+    FilterExpression: "#d = :date",
+    ExpressionAttributeNames: {
+      "#d": "date",
+    },
+    ExpressionAttributeValues: {
+      ":date": date,
+    },
+  };
+
+  console.log("Fetching bookings for date:", date);
+  try {
+    const result = await dynamoDb.send(new ScanCommand(getParams));
+    const bookings = result.Items || [];
+
+    // Set to track booked room IDs
+    const bookedRoomIds = new Set();
+
+    // Collect all room IDs from the bookings, except for the current bookingId
+    bookings.forEach((booking) => {
+      bookedRoomIds.add(Number(booking.roomId)); // This tracks all booked rooms
+    });
+
+    // Fetch booked rooms for the current bookingId
+    const currentBookingRooms = bookings
+      .filter((booking) => booking.BookingId === bookingId)
+      .map((booking) => Number(booking.roomId));
+
+    // Define total room IDs (1-20)
+    const totalRoomIds = Array.from({ length: 20 }, (_, i) => i + 1);
+
+    // Calculate free room IDs by filtering out the booked ones
+    const freeRoomIds = totalRoomIds.filter((id) => !bookedRoomIds.has(id));
+
+    // Concatenate current booking rooms with free room IDs, ensuring no duplicates
+    const allAvailableRoomIds = [
+      ...new Set([...freeRoomIds, ...currentBookingRooms]),
+    ];
+
+    // Convert to a comma-separated string
+    const allAvailableRoomIdsString = allAvailableRoomIds.join(",");
+
+    return allAvailableRoomIdsString;
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+    throw new Error("Database connection error: " + error.message);
+  }
+}
 
 exports.handler = async (event) => {
   try {
@@ -556,28 +607,36 @@ exports.handler = async (event) => {
       return responseMaker(404, "error", "No changes in booking.");
     }
 
-    // Check if all roomTypes & dates are free.
-    const newBookingIsPossible = await checkBookingIsPossible(
-      diffrenceNewBookingOriginalBooking
+    //check new func
+    const mockDate = "2024-01-01";
+    const testNewFunc = await fetchFreeRooms(
+      mockDate,
+      newBookingRoomsByType.BookingId,
+      (format = "type")
     );
-    if (!newBookingIsPossible) {
-      return responseMaker(404, "error", "Not enough roomS Free");
-    }
 
     return {
       statusCode: 200,
       body: JSON.stringify({
-        newBookingIsPossible: newBookingIsPossible,
+        testNewFunc: testNewFunc,
       }),
     };
 
     /**
-
+ 
+    // Check if all roomTypes & dates are free.
+    const newBookingIsPossible = await checkBookingIsPossible(
+      newBookingRoomsByType
+    );
+    if (!newBookingIsPossible) {
+      return responseMaker(404, "error", "Not enough roomS Free");
+    }
+ 
     
   
    
 
-    /
+    
 
     // book all the extra Rooms
     const bookedRooms = await bookNewRooms(comparisonResults, BookingId);
