@@ -21,7 +21,7 @@ functions:
     handler: functions/Employee/allReservations/index.handler
     events:
       - httpApi:
-          path: /bonzai/emp/reservation
+          path: /bonzai/emp/reservation/all
           method: GET
   makeReservation:
     handler: functions/Guest/makeReservation/index.handler
@@ -40,8 +40,9 @@ functions:
   #   handler: functions/Employee/dateReservations/index.handler
   #   events:
   #     - httpApi:
-  #         path: "/bonzai/emp/reservation/{date}"
+  #         path: /bonzai/emp/reservation/all
   #         method: GET
+
   # roomReservation:
   #   handler: functions/Employee/roomReservation/index.handler
   #   events:
