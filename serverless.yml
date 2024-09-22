@@ -1,13 +1,13 @@
+org: ${env:SERVERLESS_ORG}
 
-org: egilramsten
+service: ${env:SERVERLESS_SERVICE}
 
-service: Bonzai
-    
 provider:
   name: aws
   runtime: nodejs20.x
-  region: eu-north-1
-
+  region: ${env:AWS_REGION}
+  iam:
+    role: ${env:AWS_ROLE}
 
 build:
   esbuild:
@@ -17,46 +17,70 @@ package:
   individually: true
 
 functions:
+  allReservations:
+    handler: functions/Employee/allReservations/index.handler
+    events:
+      - httpApi:
+          path: /bonzai/emp/reservation/all
+          method: GET
+  makeReservation:
+    handler: functions/Guest/makeReservation/index.handler
+    events:
+      - httpApi:
+          path: "/bonzai/guest/boka"
+          method: POST
+  cancelReservation:
+    handler: functions/Guest/cancelReservation/index.handler
+    events:
+      - httpApi:
+          path: /bonzai/guest/avboka
+          method: DELETE
+  remakeReservation:
+    handler: functions/Guest/remakeReservation/index.handler
+    events:
+      - httpApi:
+          path: "/bonzai/guest/omboka"
+          method: PUT
+  # dateReservations:
+  #   handler: functions/Employee/dateReservations/index.handler
+  #   events:
+  #     - httpApi:
+  #         path: /bonzai/emp/reservation/all
+  #         method: GET
+
+  # roomReservation:
+  #   handler: functions/Employee/roomReservation/index.handler
+  #   events:
+  #     - httpApi:
+  #         path: "/bonzai/emp/reservation/{id}"
+  #         method: GET
 
 
-
-resourses:
+resources:
   Resources:
     BonzaiBooking:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: Bookings
+        TableName: ${env:TABLE_NAME_BOOKINGS}
         AttributeDefinitions:
           - AttributeName: BookingId
             AttributeType: "S"
-          - AttributeName: rooms
-            AttributeType: "S"          
-          - AttributeName: guests
-            AttributeType: "S"          
-          - AttributeName: totalPrice
-            AttributeType: "N"          
-          - AttributeName: startDate
-            AttributeType: "S"
-          - AttributeName: endDate
-            AttributeType: "S"          
-          - AttributeName: customer 
-            AttributeType: "S"          
-          - AttributeName: email
-            AttributeType: "S"
         KeySchema:
           - AttributeName: BookingId
-          KeyType: HASH
+            KeyType: HASH
         BillingMode: PAY_PER_REQUEST
     BonzaiRooms:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: Rooms
+        TableName: ${env:TABLE_NAME_ROOMS}
         AttributeDefinitions:
           - AttributeName: roomId
             AttributeType: "S"
-          - AttributeName: dates
-            AttributeType: "A"          
+          - AttributeName: date
+            AttributeType: "S"
         KeySchema:
           - AttributeName: roomId
-          KeyType: HASH
+            KeyType: HASH
+          - AttributeName: date
+            KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
