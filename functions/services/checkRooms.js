@@ -2,68 +2,125 @@ import { db } from "../../data";
 
 const sigleRoomIDs = async ( enkel, checkIn, checkOut ) => {
         let avalibleSingleRooms = [];
-        for ( i = 0 ; i < enkel ; i++ ) {
-            for ( j = 1 ; j < 11 ; j++ ) {
+
+        try {
+            for ( let i = 1 ; i < 11 ; i++ ) {
+                const startDate = checkIn;
+                const endDate = checkOut;
+
                 const avalibleRoom = await db.query({
                     TableName: "Rooms",
-                    KeyConditionExpression: "roomId = :roomId AND date BETWEEN :startDate AND :endDate ",
+                    KeyConditionExpression: "roomId = :roomId AND #date BETWEEN :startDate AND :endDate ",
+                    ExpressionAttributeNames: {
+                        "#date": "date"
+                    },
                     ExpressionAttributeValues: {
-                        ":roomId": j,
-                        ":startDate": checkIn,
-                        ":endDate": checkOut
+                        ":roomId": String(i),
+                        ":startDate": startDate,
+                        ":endDate": endDate
                     }
-
                 })
-                if (avalibleRoom.Items && avalibleRoom.Items.length === 0) {
-                    avalibleSingleRooms.push(j)
+                
+                if ( avalibleRoom.Count == 0 ) {
+                    avalibleSingleRooms.push(i)
+
+                }
+                if ( avalibleSingleRooms.length == enkel ) {
+                    return avalibleSingleRooms;
                 }
             }
+            if ( avalibleSingleRooms = [] ) {
+                return false
+            } else { 
+                return avalibleSingleRooms
+            }
+            
+        } catch (error) {
+            console.error("Error querying DynamoDB:", error);
+            return "no rooms avalible, 2"
         }
-    return avalibleSingleRooms
     };
 
 
 const doubleRoomsIDs = async ( dubbel, checkIn, checkOut ) => {
         let avalibleDoubleRooms = [];
-        for ( i = 0 ; i < dubbel ; i++ ) {
-            for ( j = 11 ; j < 16 ; j++ ) {
+
+
+        try {
+            for ( let i = 11 ; i < 16 ; i++ ) {
+                const startDate = checkIn;
+                const endDate = checkOut;
+
                 const avalibleRoom = await db.query({
                     TableName: "Rooms",
-                    KeyConditionExpression: "roomId = :roomId AND date BETWEEN :startDate AND :endDate ",
+                    KeyConditionExpression: "roomId = :roomId AND #date BETWEEN :startDate AND :endDate ",
+                    ExpressionAttributeNames: {
+                        "#date": "date"
+                    },
                     ExpressionAttributeValues: {
-                        ":roomId": j,
-                        ":startDate": checkIn,
-                        ":endDate": checkOut
+                        ":roomId": String(i),
+                        ":startDate": startDate,
+                        ":endDate": endDate
                     }
                 })
-                if (avalibleRoom.Items && avalibleRoom.Items.length === 0) {
-                    avalibleDoubleRooms.push(j)
+                
+                if ( avalibleRoom.Count == 0 ) {
+                    avalibleDoubleRooms.push(i)
+                }
+                if ( avalibleDoubleRooms.length == dubbel ) {
+                    return avalibleDoubleRooms;
                 }
             }
-        }
-    return avalibleDoubleRooms;
-    };
+            
+            if ( avalibleDoubleRooms = [] ) {
+                return false
+            } else { 
+                return avalibleDoubleRooms
+            }
 
+        } catch (error) {
+            console.error("Error querying DynamoDB:", error);
+            return "no rooms avalible, sorry"
+        }
+    };
 
 const suiteRoomsIDs = async ( svit, checkIn, checkOut ) => {
         let avalibleSuiteRooms = [];
-        for ( i = 0 ; i < svit ; i++ ) {
-            for ( j = 16 ; j < 21 ; j++ ) {
+
+        try {
+            for ( let i = 16 ; i < 21 ; i++ ) {
+                const startDate = checkIn;
+                const endDate = checkOut;
                 const avalibleRoom = await db.query({
                     TableName: "Rooms",
-                    KeyConditionExpression: "roomId = :roomId AND date BETWEEN :startDate AND :endDate ",
+                    KeyConditionExpression: "roomId = :roomId AND #date BETWEEN :startDate AND :endDate ",
+                    ExpressionAttributeNames: {
+                        "#date": "date"
+                    },
                     ExpressionAttributeValues: {
-                        ":roomId": j,
-                        ":startDate": checkIn,
-                        ":endDate": checkOut
+                        ":roomId": String(i),
+                        ":startDate": startDate,
+                        ":endDate": endDate
                     }
                 })
-                if (avalibleRoom.Items && avalibleRoom.Items.length === 0) {
-                    avalibleSuiteRooms.push(j)
+                
+                if ( avalibleRoom.Count == 0 ) {
+                    avalibleSuiteRooms.push(i)
+                }
+                if ( avalibleSuiteRooms.length == svit ) {
+                    return avalibleSuiteRooms;
                 }
             }
+        
+            if ( avalibleSuiteRooms = [] ) {
+                return false
+            } else { 
+                return avalibleSuiteRooms
+            }
+        } catch (error) {
+            console.error("Error querying DynamoDB:", error);
+            return "no rooms avalible"
         }
-    return avalibleSuiteRooms
     };
 
 module.exports = { sigleRoomIDs, doubleRoomsIDs, suiteRoomsIDs };

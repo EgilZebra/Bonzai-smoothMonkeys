@@ -23,6 +23,18 @@ functions:
       - httpApi:
           path: /bonzai/emp/reservation/all
           method: GET
+  makeReservation:
+    handler: functions/Guest/makeReservation/index.handler
+    events:
+      - httpApi:
+          path: "/bonzai/guest/boka"
+          method: POST
+  cancelReservation:
+    handler: functions/Guest/cancelReservation/index.handler
+    events:
+      - httpApi:
+          path: /bonzai/guest/avboka
+          method: DELETE
 
   # dateReservations:
   #   handler: functions/Employee/dateReservations/index.handler
@@ -37,18 +49,6 @@ functions:
   #     - httpApi:
   #         path: "/bonzai/emp/reservation/{id}"
   #         method: GET
-  # cancelReservation:
-  #   handler: functions/Guest/cancelReservation/index.handler
-  #   events:
-  #     - httpApi:
-  #         path: "/bonzai/guest/avboka"
-  #         method: DELETE
-  #makeReservation:
-  #  handler: /functions/Guest/makeReservation/index.handler
-  #  events:
-  #    - httpApi:
-  #        path: "/bonazi/guest/boka"
-  #        method: POST
   # remakeReservation:
   #   handler: functions/Guest/remakeReservation/index.handler
   #   events:
