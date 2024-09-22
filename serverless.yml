@@ -35,7 +35,12 @@ functions:
       - httpApi:
           path: /bonzai/guest/avboka
           method: DELETE
-
+  remakeReservation:
+    handler: functions/Guest/remakeReservation/index.handler
+    events:
+      - httpApi:
+          path: "/bonzai/guest/omboka"
+          method: PUT
   # dateReservations:
   #   handler: functions/Employee/dateReservations/index.handler
   #   events:
@@ -48,12 +53,7 @@ functions:
   #     - httpApi:
   #         path: "/bonzai/emp/reservation/{id}"
   #         method: GET
-  # remakeReservation:
-  #   handler: functions/Guest/remakeReservation/index.handler
-  #   events:
-  #     - httpApi:
-  #         path: "/bonzai/guest/omboka"
-  #         method: PUT
+
 
 resources:
   Resources:
