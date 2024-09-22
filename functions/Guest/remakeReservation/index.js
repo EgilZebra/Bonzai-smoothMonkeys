@@ -6,6 +6,7 @@ import {
   BatchWriteItemCommand,
   BatchWriteCommand,
   UpdateCommand,
+  PutCommand,
 } from "@aws-sdk/lib-dynamodb";
 require("dotenv").config();
 const client = new DynamoDBClient({});
@@ -563,6 +564,319 @@ async function fetchFreeRooms(date, bookingId) {
     throw new Error("Database connection error: " + error.message);
   }
 }
+async function isNewBookingPossible(newBookingRoomsByType) {
+  const { BookingId, checkIn, checkOut, rooms } = newBookingRoomsByType;
+  const [singleRoomsNeeded, doubleRoomsNeeded, suitesNeeded] = rooms
+    .split(",")
+    .map(Number);
+
+  // Helper function to get date range
+  function getDateRange(startDate, endDate) {
+    const dates = [];
+    let currentDate = new Date(startDate);
+    while (currentDate < new Date(endDate)) {
+      dates.push(currentDate.toISOString().split("T")[0]);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    return dates;
+  }
+
+  // Get all dates for the stay
+  const datesOfStay = getDateRange(checkIn, checkOut);
+
+  console.log("datesOfStay", datesOfStay);
+  console.log(
+    "singleRoomsNeeded",
+    singleRoomsNeeded,
+    "doubleRoomsNeeded",
+    doubleRoomsNeeded,
+    "suitesNeeded",
+    suitesNeeded
+  );
+
+  // Initialize availability for room types (arrays will hold room IDs)
+  const roomAvailability = {
+    single: new Set(Array.from({ length: 10 }, (_, i) => i + 1)), // IDs 1-10
+    double: new Set(Array.from({ length: 5 }, (_, i) => i + 11)), // IDs 11-15
+    suites: new Set(Array.from({ length: 5 }, (_, i) => i + 16)), // IDs 16-20
+  };
+
+  // Fetch available room IDs for all dates
+  for (const date of datesOfStay) {
+    const availableRoomIdsString = await fetchFreeRooms(date, BookingId);
+    const availableRoomIds = availableRoomIdsString.split(",").map(Number);
+
+    // Filter room IDs based on their ranges for singles, doubles, and suites
+    const availableSingleRooms = new Set(
+      availableRoomIds.filter((id) => id >= 1 && id <= 10)
+    );
+    const availableDoubleRooms = new Set(
+      availableRoomIds.filter((id) => id >= 11 && id <= 15)
+    );
+    const availableSuites = new Set(
+      availableRoomIds.filter((id) => id >= 16 && id <= 20)
+    );
+
+    // Update room availability for the current date by intersecting with existing availability
+    roomAvailability.single = new Set(
+      [...roomAvailability.single].filter((id) => availableSingleRooms.has(id))
+    );
+    roomAvailability.double = new Set(
+      [...roomAvailability.double].filter((id) => availableDoubleRooms.has(id))
+    );
+    roomAvailability.suites = new Set(
+      [...roomAvailability.suites].filter((id) => availableSuites.has(id))
+    );
+
+    // Check if there's still enough availability for the required rooms
+    if (
+      roomAvailability.single.size < singleRoomsNeeded ||
+      roomAvailability.double.size < doubleRoomsNeeded ||
+      roomAvailability.suites.size < suitesNeeded
+    ) {
+      return false; // Not enough rooms available across all dates
+    }
+  }
+
+  // Allocate rooms
+  const roomIdsToBook = {
+    single: [],
+    double: [],
+    suites: [],
+  };
+
+  // Helper to allocate rooms
+  function allocateRooms(roomSet, roomsNeeded, roomIdsToBook) {
+    let allocated = [];
+    for (const roomId of roomSet) {
+      if (allocated.length < roomsNeeded) {
+        allocated.push(roomId);
+        roomSet.delete(roomId); // Remove this room from future allocations
+      }
+    }
+    if (allocated.length === roomsNeeded) {
+      roomIdsToBook.push(...allocated);
+      return true;
+    }
+    return false;
+  }
+
+  // Try to allocate single rooms
+  if (
+    !allocateRooms(
+      roomAvailability.single,
+      singleRoomsNeeded,
+      roomIdsToBook.single
+    )
+  ) {
+    return false;
+  }
+
+  // Try to allocate double rooms
+  if (
+    !allocateRooms(
+      roomAvailability.double,
+      doubleRoomsNeeded,
+      roomIdsToBook.double
+    )
+  ) {
+    return false;
+  }
+
+  // Try to allocate suites
+  if (
+    !allocateRooms(roomAvailability.suites, suitesNeeded, roomIdsToBook.suites)
+  ) {
+    return false;
+  }
+
+  // Combine all allocated room IDs and return them
+  const allRoomIds = [
+    ...roomIdsToBook.single,
+    ...roomIdsToBook.double,
+    ...roomIdsToBook.suites,
+  ];
+
+  return allRoomIds.length > 0 ? allRoomIds : false;
+}
+async function bookRooms(newBookingRoomsByType, roomIdsToBook) {
+  const { checkIn, checkOut, BookingId } = newBookingRoomsByType;
+
+  // Helper function to get all dates between check-in and check-out (exclusive of check-out)
+  const getDatesBetween = (start, end) => {
+    const dates = [];
+    let currentDate = new Date(start);
+    const endDate = new Date(end);
+
+    while (currentDate < endDate) {
+      dates.push(currentDate.toISOString().split("T")[0]); // Format date as YYYY-MM-DD
+      currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
+    }
+
+    return dates;
+  };
+
+  const datesToBook = getDatesBetween(checkIn, checkOut);
+  const roomsToBook = [];
+  const alreadyBookedRoomIds = new Set();
+
+  // Check for already booked rooms for the current BookingId
+  for (let date of datesToBook) {
+    const bookedRoomIds = await fetchBookedRoomsBookingId(date, BookingId);
+    if (bookedRoomIds) {
+      bookedRoomIds.split(",").forEach((id) => alreadyBookedRoomIds.add(id));
+    }
+  }
+
+  // Filter out roomIdsToBook to get only those that are not already booked
+  for (let roomId of roomIdsToBook) {
+    if (!alreadyBookedRoomIds.has(roomId.toString())) {
+      roomsToBook.push(roomId);
+    } else {
+      console.log(
+        `Room ${roomId} is already booked for the current BookingId. Skipping.`
+      );
+    }
+  }
+
+  if (roomsToBook.length === 0 && alreadyBookedRoomIds.size === 0) {
+    return {
+      status: "warning",
+      message: "No available rooms to book for the current BookingId.",
+    };
+  }
+
+  const bookingPromises = [];
+
+  console.log("datesToBook", datesToBook);
+  console.log("BookingId", BookingId);
+  console.log("roomsToBook", roomsToBook);
+
+  // Book the rooms for the specified dates
+  for (let roomId of roomsToBook) {
+    for (let date of datesToBook) {
+      const putParams = {
+        TableName: "Rooms",
+        Item: {
+          roomId: roomId.toString(), // Ensure roomId is a string
+          date,
+          BookingId,
+        },
+      };
+
+      console.log("Attempting to book with params:", putParams); // Log before booking
+
+      const bookingPromise = dynamoDb
+        .send(new PutCommand(putParams))
+        .then(() => {
+          console.log(`Room ${roomId} successfully booked for ${date}`);
+        })
+        .catch((error) => {
+          console.error(`Error booking room ${roomId} for ${date}:`, error);
+        });
+
+      bookingPromises.push(bookingPromise);
+    }
+  }
+
+  // Wait for all bookings to complete
+  await Promise.all(bookingPromises);
+
+  // Construct the final message
+  const bookedRoomIds = [...roomsToBook, ...Array.from(alreadyBookedRoomIds)];
+
+  const bookedRoomsFlow = bookedRoomIds.join(", ");
+
+  return {
+    status: "success",
+    bookedRoomsFlow: bookedRoomsFlow,
+    message: `You have booked the rooms (${bookedRoomIds.join(
+      ", "
+    )}) for the dates (${checkIn} to ${checkOut}).`,
+  };
+}
+
+async function fetchBookedRoomsBookingId(date, bookingId) {
+  console.log("bookingId----", bookingId);
+  const getParams = {
+    TableName: "Rooms",
+    FilterExpression: "#d = :date",
+    ExpressionAttributeNames: {
+      "#d": "date",
+    },
+    ExpressionAttributeValues: {
+      ":date": date,
+    },
+  };
+
+  console.log("Fetching bookings for date:", date);
+  try {
+    const result = await dynamoDb.send(new ScanCommand(getParams));
+    const bookings = result.Items || [];
+
+    // Collect booked room IDs for the specific bookingId
+    const bookedRoomIds = bookings
+      .filter((booking) => booking.BookingId === bookingId)
+      .map((booking) => Number(booking.roomId));
+
+    // Convert to a comma-separated string
+    const bookedRoomIdsString = bookedRoomIds.join(",");
+
+    return bookedRoomIdsString;
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+    throw new Error("Database connection error: " + error.message);
+  }
+}
+
+function findRoomsToDelete(originalBookingRoomsByIds, newBookingRoomsById) {
+  // Parse the checkIn and checkOut dates
+  const originalCheckIn = new Date(originalBookingRoomsByIds.checkIn);
+  const originalCheckOut = new Date(originalBookingRoomsByIds.checkOut);
+  const newCheckIn = new Date(newBookingRoomsById.checkIn);
+  const newCheckOut = new Date(newBookingRoomsById.checkOut);
+
+  // Determine the longest check-in and check-out dates
+  const startDate = new Date(Math.min(originalCheckIn, newCheckIn));
+  const endDate = new Date(Math.max(originalCheckOut, newCheckOut));
+
+  // Create an array to hold the date range
+  const dateRange = [];
+  for (let dt = startDate; dt <= endDate; dt.setDate(dt.getDate() + 1)) {
+    dateRange.push(dt.toISOString().split("T")[0]); // Format as YYYY-MM-DD
+  }
+
+  console.log("Date Range:", dateRange); // Log the date range
+
+  // Extract room IDs
+  const originalRoomIds = originalBookingRoomsByIds.rooms
+    .split(",")
+    .map((id) => id.trim());
+  const newRoomIds = newBookingRoomsById.rooms
+    .split(",")
+    .map((id) => id.trim());
+
+  console.log("Original Room IDs:", originalRoomIds); // Log original room IDs
+  console.log("New Room IDs:", newRoomIds); // Log new room IDs
+
+  // Prepare an array to hold the results
+  const removeDateRoomIds = [];
+
+  // Compare rooms
+  originalRoomIds.forEach((roomId) => {
+    if (!newRoomIds.includes(roomId)) {
+      removeDateRoomIds.push({ [originalBookingRoomsByIds.checkIn]: roomId });
+      console.log(
+        `Room ${roomId} is not in new booking, adding to remove list.`
+      ); // Log rooms to remove
+    } else {
+      console.log(`Room ${roomId} is still booked.`); // Log rooms that are still booked
+    }
+  });
+
+  console.log("Remove Date Room IDs:", removeDateRoomIds); // Log the final result
+  return removeDateRoomIds;
+}
 
 exports.handler = async (event) => {
   try {
@@ -607,18 +921,64 @@ exports.handler = async (event) => {
       return responseMaker(404, "error", "No changes in booking.");
     }
 
+    /**
     //check new func
-    const mockDate = "2024-01-01";
+    const mockDate = "2024-01-03";
     const testNewFunc = await fetchFreeRooms(
       mockDate,
       newBookingRoomsByType.BookingId,
       (format = "type")
     );
+ */
+
+    // returns roomIds of the rooms to book
+    const roomIdsToBook = await isNewBookingPossible(newBookingRoomsByType);
+    if (!roomIdsToBook) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({
+          error: "booking can't be made",
+        }),
+      };
+    }
+    /**
+    mockDate = "2024-01-01";
+    idUser = "test1234";
+    const trial = await fetchBookedRoomsBookingId(mockDate, idUser);
+    return {
+      statusCode: 404,
+      body: JSON.stringify({
+        trial: trial,
+      }),
+    };
+ */
+
+    // attempt to book rooms
+    const newRoomsBooked = await bookRooms(
+      newBookingRoomsByType,
+      roomIdsToBook
+    );
+
+    const newBookingRoomsById = {
+      ...newBookingRoomsByType,
+      rooms: newRoomsBooked.bookedRoomsFlow,
+    };
+
+    console.log("originalBookingRoomsByIds", originalBookingRoomsByIds);
+    console.log("newBookingRoomsById", newBookingRoomsById);
+
+    //try do delete rooms not existing in new booking
+    const roomsToDelete = findRoomsToDelete(
+      originalBookingRoomsByIds,
+      newBookingRoomsById
+    );
+    console.log("roomsToDelete", roomsToDelete); // Output: [{ date: "2024-01-01", roomId: "1" }]
 
     return {
       statusCode: 200,
       body: JSON.stringify({
-        testNewFunc: testNewFunc,
+        roomsToDelete: roomsToDelete,
+        // bookedRoomsFlow: newRoomsBooked.bookedRoomsFlow, => hold the roomIds for the new booking
       }),
     };
 
