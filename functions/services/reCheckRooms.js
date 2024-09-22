@@ -1,33 +1,38 @@
 import { db } from "../../data";
 
-const sigleRoomIDs = async ( enkel, checkIn, checkOut ) => {
+const ResigleRoomIDs = async ( enkel, datum, oldBookingID ) => {
         let avalibleSingleRooms = [];
 
         try {
             for ( let i = 1 ; i < 11 ; i++ ) {
-                const startDate = checkIn;
-                const endDate = checkOut;
+                const startDate = datum;
+
 
                 const avalibleRoom = await db.query({
                     TableName: "Rooms",
-                    KeyConditionExpression: "roomId = :roomId AND #date BETWEEN :startDate AND :endDate ",
+                    KeyConditionExpression: "roomId = :roomId AND #date = :startDate",
                     ExpressionAttributeNames: {
                         "#date": "date"
                     },
                     ExpressionAttributeValues: {
                         ":roomId": String(i),
                         ":startDate": startDate,
-                        ":endDate": endDate
+
                     }
                 })
                 
-                if ( avalibleRoom.Count == 0 ) {
+                if ( avalibleRoom.Count == 0 ) { 
                     avalibleSingleRooms.push(i)
+                }
 
+                if (avalibleRoom.Items && avalibleRoom.Items.length > 0) {
+                    for (let item of avalibleRoom.Items) {
+                        if (item.bookingId === oldBookingID) {
+                            avalibleSingleRooms.push(i)
+                        }
+                    }
                 }
-                if ( avalibleSingleRooms.length == enkel ) {
-                    return avalibleSingleRooms;
-                }
+
             }
             if ( avalibleSingleRooms == [] ) {
                 return false
@@ -37,39 +42,45 @@ const sigleRoomIDs = async ( enkel, checkIn, checkOut ) => {
             
         } catch (error) {
             console.error("Error querying DynamoDB:", error);
-            return "no rooms avalible, 2"
+            return false
         }
     };
 
 
-const doubleRoomsIDs = async ( dubbel, checkIn, checkOut ) => {
+const RedoubleRoomsIDs = async ( dubbel, datum, oldBookingID) => {
         let avalibleDoubleRooms = [];
 
 
         try {
             for ( let i = 11 ; i < 16 ; i++ ) {
-                const startDate = checkIn;
-                const endDate = checkOut;
+                const startDate = datum;
 
                 const avalibleRoom = await db.query({
                     TableName: "Rooms",
-                    KeyConditionExpression: "roomId = :roomId AND #date BETWEEN :startDate AND :endDate ",
+                    KeyConditionExpression: "roomId = :roomId AND #date = :startDate ",
                     ExpressionAttributeNames: {
                         "#date": "date"
                     },
                     ExpressionAttributeValues: {
                         ":roomId": String(i),
-                        ":startDate": startDate,
-                        ":endDate": endDate
+                        ":startDate": startDate
                     }
                 })
-                
+
                 if ( avalibleRoom.Count == 0 ) {
                     avalibleDoubleRooms.push(i)
                 }
-                if ( avalibleDoubleRooms.length == dubbel ) {
-                    return avalibleDoubleRooms;
+
+                if (avalibleRoom.Items && avalibleRoom.Items.length > 0) {
+                    for (let item of avalibleRoom.Items) {
+                        if (item.bookingId === oldBookingID) {
+                            avalibleDoubleRooms.push(i)
+                        }
+                    }
                 }
+                
+                
+
             }
             
             if ( avalibleDoubleRooms == [] ) {
@@ -80,36 +91,41 @@ const doubleRoomsIDs = async ( dubbel, checkIn, checkOut ) => {
 
         } catch (error) {
             console.error("Error querying DynamoDB:", error);
-            return "no rooms avalible, sorry"
+            return false
         }
     };
 
-const suiteRoomsIDs = async ( svit, checkIn, checkOut ) => {
+const ResuiteRoomsIDs = async ( svit, datum , oldBookingID ) => {
         let avalibleSuiteRooms = [];
 
         try {
             for ( let i = 16 ; i < 21 ; i++ ) {
-                const startDate = checkIn;
-                const endDate = checkOut;
+                const startDate = datum;
                 const avalibleRoom = await db.query({
                     TableName: "Rooms",
-                    KeyConditionExpression: "roomId = :roomId AND #date BETWEEN :startDate AND :endDate ",
+                    KeyConditionExpression: "roomId = :roomId AND #date = :startDate ",
                     ExpressionAttributeNames: {
                         "#date": "date"
                     },
                     ExpressionAttributeValues: {
                         ":roomId": String(i),
-                        ":startDate": startDate,
-                        ":endDate": endDate
+                        ":startDate": startDate
                     }
                 })
                 
-                if ( avalibleRoom.Count == 0 ) {
+                if ( avalibleRoom.Count == 0  ) {
                     avalibleSuiteRooms.push(i)
                 }
-                if ( avalibleSuiteRooms.length == svit ) {
-                    return avalibleSuiteRooms;
+
+                if (avalibleRoom.Items && avalibleRoom.Items.length > 0) {
+                    for (let item of avalibleRoom.Items) {
+                        if (item.bookingId === oldBookingID) {
+                            avalibleSuiteRooms.push(i)
+                        }
+                    }
                 }
+
+
             }
         
             if ( avalibleSuiteRooms == [] ) {
@@ -119,8 +135,8 @@ const suiteRoomsIDs = async ( svit, checkIn, checkOut ) => {
             }
         } catch (error) {
             console.error("Error querying DynamoDB:", error);
-            return "no rooms avalible"
+            return false
         }
     };
 
-module.exports = { sigleRoomIDs, doubleRoomsIDs, suiteRoomsIDs };
+module.exports = { ResigleRoomIDs, RedoubleRoomsIDs, ResuiteRoomsIDs };
